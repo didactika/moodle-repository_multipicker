@@ -109,6 +109,9 @@ class repository_multipicker extends repository_local {
      * @return bool Current authorization.
      */
     public function file_is_accessible($source) {
+        if (strpos($source, 'batch:') !== 0) {
+            return parent::file_is_accessible($source);
+        }
         try {
             $this->get_file_reference($source);
             return true;
