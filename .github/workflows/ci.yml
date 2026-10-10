@@ -1,0 +1,244 @@
+# @copyright 2026 Didactika.org
+# @author Hector Arrechea <hectorlazaroarrechea@gmail.com>
+# @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+name: Moodle Plugin CI
+
+# Adapted from didactika/template-moodle-plugin.
+# PRs validate main and the supported maintenance lines; first publication can run CI manually.
+# Release publication is a separate, explicit workflow.
+on:
+  pull_request:
+    branches:
+      - main
+      - master
+      - 'MOODLE_*_STABLE'
+  workflow_dispatch:
+
+jobs:
+  setup:
+    # Turns $plugin->supported (version.php) into the test matrix consumed by
+    # the `test` job below, so that array is the ONLY place in this repo that
+    # declares which Moodle versions this plugin is tested against. See the
+    # comment inside the step for the one other fact this needs -- a
+    # Moodle-version -> PHP-version table -- and why it lives here and
+    # nowhere else.
+    name: Build test matrix from version.php
+    runs-on: ubuntu-22.04
+    outputs:
+      matrix: ${{ steps.build.outputs.matrix }}
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v7
+
+      - name: Build test matrix from version.php
+        id: build
+        run: |
+          set -euo pipefail
+
+          # PHP ranges verified against the official 4.5 and 5.3 release requirements on 2026-10-10.
+          # https://moodledev.io/general/releases/4.5
+          # https://moodledev.io/general/releases/5.3
+          MOODLE_PHP_TABLE='{
+            "400": ["7.4", "8.0"],
+            "401": ["8.0"],
+            "402": ["8.0"],
+            "403": ["8.0"],
+            "404": ["8.1"],
+            "405": ["8.1", "8.3"],
+            "500": ["8.2"],
+            "501": ["8.2"],
+            "502": ["8.3"],
+            "503": ["8.3", "8.4"]
+          }'
+          # Expand supported lower/upper bounds across existing release codes, including the 4.x/5.x gap.
+          supported_raw=$(grep -oP '\$plugin->supported\s*=\s*\[\K[^\]]+' version.php || true)
+          if [ -z "$supported_raw" ]; then
+            echo "::error::Could not find \$plugin->supported = [...] in version.php."
+            exit 1
+          fi
+
+          # Named "entries", not "include": jq treats `include` as reserved
+          # (its own module-loading directive), and rejects it not just as a
+          # bareword object key but as a --arg/--argjson variable name too --
+          # confirmed against jqlang/jq#1619, `jq -n --arg end 1 '{end:$end}'`
+          # fails the same way for the same reason. Quoting the key alone
+          # ("include": ...) does not fix it: the --argjson name is a second,
+          # independent place the same reserved word can't appear. The JSON
+          # output still needs a field literally called "include" -- that's
+          # GitHub Actions' own matrix schema, not jq's, and unaffected by
+          # this rename.
+          entries='[]'
+          supported_raw=$(echo "$supported_raw" | tr -d '[:space:]' | tr ',' '\n' | sort -u | paste -sd,)
+
+          lower=$(echo "$supported_raw" | cut -d, -f1)
+          upper=$(echo "$supported_raw" | awk -F, '{print $NF}')
+          expanded=$(echo "$MOODLE_PHP_TABLE" | jq -r --argjson lower "$lower" --argjson upper "$upper" 'keys[] | select((tonumber >= $lower) and (tonumber <= $upper))')
+          mapfile -t versions <<< "$expanded"
+          for raw in "${versions[@]}"; do
+            v=$(echo "$raw" | tr -d '[:space:]')
+            [ -z "$v" ] && continue
+
+            # The trailing `tr -d '\r'` guards against a stray carriage
+            # return ending up in a PHP version string (e.g. from a tool in
+            # the pipeline emitting CRLF) and silently corrupting the
+            # generated branch/PHP values downstream.
+            phps=$(echo "$MOODLE_PHP_TABLE" | jq -r --arg v "$v" '.[$v] // empty | .[]' | tr -d '\r')
+            if [ -z "$phps" ]; then
+              echo "::error::Moodle version $v is listed in \$plugin->supported but MOODLE_PHP_TABLE above has no entry for it. Add one (see https://moodledev.io/general/development/policies/php) before this can run."
+              exit 1
+            fi
+
+            while IFS= read -r php; do
+              for db in pgsql mariadb; do
+                entries=$(echo "$entries" | jq -c \
+                  --arg php "$php" --arg branch "MOODLE_${v}_STABLE" --arg db "$db" \
+                  '. + [{"php": $php, "moodle-branch": $branch, "database": $db}]')
+              done
+            done <<< "$phps"
+          done
+
+          matrix=$(jq -c -n --argjson entries "$entries" '{"include": $entries}')
+          echo "Generated test matrix:"
+          echo "$matrix" | jq .
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+
+  test:
+    needs: setup
+    runs-on: ubuntu-22.04
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: 'postgres'
+          POSTGRES_HOST_AUTH_METHOD: 'trust'
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 3
+
+      mariadb:
+        image: mariadb:11.4
+        env:
+          MYSQL_USER: 'root'
+          MYSQL_ALLOW_EMPTY_PASSWORD: "true"
+          MYSQL_CHARACTER_SET_SERVER: "utf8mb4"
+          MYSQL_COLLATION_SERVER: "utf8mb4_unicode_ci"
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval 10s --health-timeout 5s --health-retries 3
+
+    strategy:
+      fail-fast: false
+      # Populated entirely by the `setup` job above. Do not hand-edit this or
+      # add an `exclude:` list here -- change version.php (to add/drop a
+      # supported Moodle version) and/or MOODLE_PHP_TABLE in the `setup` job
+      # (to fix which PHP versions a Moodle version tests against) instead.
+      matrix: ${{ fromJSON(needs.setup.outputs.matrix) }}
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v7
+        with:
+          path: plugin
+
+      - name: Setup PHP ${{ matrix.php }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: ${{ matrix.extensions }}
+          ini-values: max_input_vars=5000
+          # If you are not using code coverage, keep "none". Otherwise, use "pcov" (Moodle 3.10 and up) or "xdebug".
+          # If you try to use code coverage with "none", it will fallback to phpdbg (which has known problems).
+          coverage: none
+
+      - name: Initialise moodle-plugin-ci
+        run: |
+          composer create-project -n --no-dev --prefer-dist moodlehq/moodle-plugin-ci ci ^4
+          echo $(cd ci/bin; pwd) >> $GITHUB_PATH
+          echo $(cd ci/vendor/bin; pwd) >> $GITHUB_PATH
+          sudo locale-gen en_AU.UTF-8
+          echo "NVM_DIR=$HOME/.nvm" >> $GITHUB_ENV
+
+      - name: Install moodle-plugin-ci
+        run: moodle-plugin-ci install --plugin ./plugin --db-host=127.0.0.1
+        env:
+          DB: ${{ matrix.database }}
+          MOODLE_BRANCH: ${{ matrix.moodle-branch }}
+          # Uncomment this to run Behat tests using the Moodle App.
+          # MOODLE_APP: 'true'
+
+      - name: PHP Lint
+        if: ${{ !cancelled() }}
+        run: moodle-plugin-ci phplint
+
+      - name: PHP Mess Detector
+        continue-on-error: true # This step will show errors but will not fail
+        if: ${{ !cancelled() }}
+        run: moodle-plugin-ci phpmd
+
+      - name: Moodle Code Checker
+        if: ${{ !cancelled() }}
+        run: moodle-plugin-ci phpcs --max-warnings 0
+
+      - name: Moodle PHPDoc Checker
+        if: ${{ !cancelled() }}
+        run: moodle-plugin-ci phpdoc --max-warnings 0
+
+      - name: Validating
+        if: ${{ !cancelled() }}
+        run: moodle-plugin-ci validate
+
+      - name: Check upgrade savepoints
+        if: ${{ !cancelled() }}
+        run: moodle-plugin-ci savepoints
+
+      - name: Mustache Lint
+        if: ${{ !cancelled() }}
+        run: moodle-plugin-ci mustache
+
+      - name: Grunt
+        if: ${{ !cancelled() }}
+        run: moodle-plugin-ci grunt --max-lint-warnings 0
+
+      - name: PHPUnit tests
+        if: ${{ !cancelled() }}
+        run: moodle-plugin-ci phpunit --fail-on-warning
+
+      - name: Behat features
+        id: behat
+        if: ${{ !cancelled() }}
+        # Example (delete if it does not apply to your plugin): if your SCSS
+        # still uses Bootstrap-4-era utility classes (mr-*, badge-*,
+        # text-right, ...) that Moodle 5.x renders through its Bootstrap 5
+        # compat shim but reports as deprecated, you may need to omit
+        # --scss-deprecations here until you migrate to Bootstrap 5 classes.
+        run: moodle-plugin-ci behat --profile chrome
+
+      - name: Upload Behat Faildump
+        if: ${{ failure() && steps.behat.outcome == 'failure' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: Behat Faildump (${{ join(matrix.*, ', ') }})
+          path: ${{ github.workspace }}/moodledata/behat_dump
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: Mark cancelled jobs as failed.
+        if: ${{ cancelled() }}
+        run: exit 1
+
+  ci-complete:
+    # Configure this aggregate status as the required PR check when protecting maintenance branches.
+    name: CI complete
+    if: always()
+    needs: test
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Verify all matrix jobs passed
+        run: |
+          result="${{ needs.test.result }}"
+          echo "Test matrix result: $result"
+          if [ "$result" != "success" ]; then
+            echo "::error::One or more CI matrix jobs did not succeed."
+            exit 1
+          fi

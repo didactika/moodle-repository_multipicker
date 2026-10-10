@@ -1,0 +1,11 @@
+{{!
+    @template repository_multipicker/browser/review
+    @copyright 2026 Didactika.org
+    @author Hector Arrechea <hectorlazaroarrechea@gmail.com>
+    @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+    Example context (json): {"count":1,"files":[{"filepath":"/","filename":"example.pdf"}]}
+}}
+<p class="small text-muted">{{count}} {{#str}}files, core{{/str}}</p>
+<ul class="list-group list-group-flush">
+    {{#files}}<li class="list-group-item px-0 text-break">{{#pix}}f/document, core{{/pix}} <span class="text-muted small">{{filepath}}</span> <strong>{{filename}}</strong></li>{{/files}}
+</ul>

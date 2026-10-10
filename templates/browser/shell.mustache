@@ -1,0 +1,29 @@
+{{!
+    @template repository_multipicker/browser/shell
+    @copyright 2026 Didactika.org
+    @author Hector Arrechea <hectorlazaroarrechea@gmail.com>
+    @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+    Example context (json): {"scope":"example", "name":"MultiPicker", "sesskey":"example"}
+}}
+<div class="multipicker-browser p-3" data-multipicker-root data-scope="{{scope}}" data-sesskey="{{sesskey}}">
+    <h2 class="h4 mb-3">{{{name}}}</h2>
+    <div class="alert alert-danger" data-multipicker-error role="alert" hidden></div>
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <button class="btn btn-sm btn-outline-secondary" type="button" data-multipicker-back hidden>{{#pix}}t/left, core{{/pix}} {{#str}}back, repository_multipicker{{/str}}</button>
+        <span class="small text-muted text-break" data-multipicker-location></span>
+        <div data-multipicker-selection-actions>
+            <button class="btn btn-sm btn-link" type="button" data-multipicker-selectall>{{#str}}selectall, repository_multipicker{{/str}}</button>
+            <button class="btn btn-sm btn-link" type="button" data-multipicker-clear>{{#str}}clear, repository_multipicker{{/str}}</button>
+        </div>
+    </div>
+    <div class="multipicker-results" data-multipicker-results aria-live="polite"></div>
+    <div class="d-flex justify-content-between align-items-center my-2" data-multipicker-pagination>
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-multipicker-previous hidden>{{#str}}previous, core{{/str}}</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-multipicker-next hidden>{{#str}}next, core{{/str}}</button>
+    </div>
+    <div class="d-flex align-items-center justify-content-between border-top pt-2">
+        <span class="small"><strong data-multipicker-count>0</strong> {{#str}}selected, repository_multipicker{{/str}}</span>
+        <button class="btn btn-primary" type="button" data-multipicker-review disabled>{{#str}}review, repository_multipicker{{/str}} {{#pix}}t/right, core{{/pix}}</button>
+        <button class="btn btn-primary" type="button" data-multipicker-import hidden>{{#str}}import, repository_multipicker{{/str}}</button>
+    </div>
+</div>
