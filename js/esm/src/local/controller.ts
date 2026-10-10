@@ -8,13 +8,13 @@
  * @author Hector Arrechea <hectorlazaroarrechea@gmail.com>
  * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-import Selectors from 'repository_multipicker/local/selectors';
-import {createActions} from 'repository_multipicker/local/actions';
-import {register} from 'repository_multipicker/local/listeners';
+import Selectors from '@moodle/lms/repository_multipicker/local/selectors';
+import {createActions} from '@moodle/lms/repository_multipicker/local/actions';
+import {register} from '@moodle/lms/repository_multipicker/local/listeners';
 
 /** @param {string} scope Session scope. */
-export const init = scope => {
-    const root = document.querySelector(Selectors.root);
+export const init = (scope: string) => {
+    const root = document.querySelector<HTMLElement>(Selectors.root);
     if (!root || root.dataset.scope !== scope || root.dataset.ready) {
         return;
     }

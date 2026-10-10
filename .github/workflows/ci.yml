@@ -200,6 +200,14 @@ jobs:
         if: ${{ !cancelled() }}
         run: moodle-plugin-ci grunt --max-lint-warnings 0
 
+      - name: Moodle 5.3 TypeScript and ESM
+        if: ${{ !cancelled() }}
+        working-directory: moodle
+        run: |
+          npx grunt jsconfig
+          npx tsc --project public/repository/multipicker/tsconfig.json
+          npx grunt esm
+
       - name: PHPUnit tests
         if: ${{ !cancelled() }}
         run: moodle-plugin-ci phpunit --fail-on-warning

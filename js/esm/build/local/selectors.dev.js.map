@@ -1,0 +1,8 @@
+{
+  "version": 3,
+  "sources": ["../../src/local/selectors.ts"],
+  "sourceRoot": "../../../../../../sources/public/repository/multipicker/js/esm/build",
+  "sourcesContent": ["// This file is part of Moodle - https://moodle.org/\n// Moodle is free software under the GNU GPL v3 or later.\n\n/**\n * Shared DOM contracts.\n * @module repository_multipicker/local/selectors\n * @copyright 2026 Didactika.org\n * @author Hector Arrechea <hectorlazaroarrechea@gmail.com>\n * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later\n */\nexport default {\n    root: '[data-multipicker-root]', results: '[data-multipicker-results]', error: '[data-multipicker-error]',\n    card: '[data-multipicker-card]', check: '[data-multipicker-check]', open: '[data-multipicker-open]',\n    back: '[data-multipicker-back]', selectall: '[data-multipicker-selectall]', clear: '[data-multipicker-clear]',\n    review: '[data-multipicker-review]', import: '[data-multipicker-import]', count: '[data-multipicker-count]',\n    location: '[data-multipicker-location]', previous: '[data-multipicker-previous]', next: '[data-multipicker-next]',\n    selectionActions: '[data-multipicker-selection-actions]', pagination: '[data-multipicker-pagination]',\n};\n"],
+  "mappings": "AAGA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAOA,IAAO,oBAAQ;AAAA,EACX,MAAM;AAAA,EAA2B,SAAS;AAAA,EAA8B,OAAO;AAAA,EAC/E,MAAM;AAAA,EAA2B,OAAO;AAAA,EAA4B,MAAM;AAAA,EAC1E,MAAM;AAAA,EAA2B,WAAW;AAAA,EAAgC,OAAO;AAAA,EACnF,QAAQ;AAAA,EAA6B,QAAQ;AAAA,EAA6B,OAAO;AAAA,EACjF,UAAU;AAAA,EAA+B,UAAU;AAAA,EAA+B,MAAM;AAAA,EACxF,kBAAkB;AAAA,EAAwC,YAAY;AAC1E;",
+  "names": []
+}

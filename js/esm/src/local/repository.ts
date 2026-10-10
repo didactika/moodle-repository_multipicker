@@ -8,7 +8,8 @@
  * @author Hector Arrechea <hectorlazaroarrechea@gmail.com>
  * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-import Config from 'core/config';
+import type {Response} from './contracts';
+import Config from '@moodle/lms/core/config';
 
 /**
  * Send a session-bound browser request.
@@ -16,7 +17,7 @@ import Config from 'core/config';
  * @param {Object} fields Request data.
  * @returns {Promise<Object>} Response.
  */
-export const request = async(scope, fields) => {
+export const request = async(scope: string, fields: Record<string, string | number | string[]>): Promise<Response> => {
     const body = new URLSearchParams({scope, ajax: '1', sesskey: Config.sesskey});
     Object.entries(fields).forEach(([key, value]) => {
         if (Array.isArray(value)) {
@@ -28,7 +29,7 @@ export const request = async(scope, fields) => {
     const response = await fetch(Config.wwwroot + '/repository/multipicker/browser.php', {
         method: 'POST', credentials: 'same-origin', body,
     });
-    const result = await response.json();
+    const result = await response.json() as Response;
     if (!response.ok || result.error) {
         throw new Error(result.error || response.statusText);
     }

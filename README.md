@@ -7,8 +7,8 @@
 *Select several Server files and folders in one import*
 
 [![Release](https://img.shields.io/github/v/release/didactika/moodle-repository_multipicker?style=flat-square)](https://github.com/didactika/moodle-repository_multipicker/releases)
-[![Moodle](https://img.shields.io/badge/Moodle-4.0–5.2-f98012?style=flat-square&logo=moodle&logoColor=white)](https://moodle.org)
-[![PHP](https://img.shields.io/badge/PHP-7.4+-777bb4?style=flat-square&logo=php&logoColor=white)](https://www.php.net)
+[![Moodle](https://img.shields.io/badge/Moodle-5.3-f98012?style=flat-square&logo=moodle&logoColor=white)](https://moodle.org)
+[![PHP](https://img.shields.io/badge/PHP-8.3+-777bb4?style=flat-square&logo=php&logoColor=white)](https://www.php.net)
 [![License](https://img.shields.io/badge/License-GPL_v3-blue?style=flat-square)](LICENSE)
 
 [Overview](#overview) · [Installation](#installation) · [Usage](#usage) · [Configuration](#configuration) · [Troubleshooting](#troubleshooting)
@@ -35,7 +35,7 @@ MultiPicker (**repository_multipicker**) is a standalone repository that adds mu
 Place this distribution in `repository/multipicker`, run Moodle's upgrade and enable MultiPicker under **Site administration → Plugins → Repositories → Manage repositories**. Install no local companion.
 
 ```bash
-git clone --branch MOODLE_400_STABLE https://github.com/didactika/moodle-repository_multipicker.git repository/multipicker
+git clone --branch main https://github.com/didactika/moodle-repository_multipicker.git repository/multipicker
 php admin/cli/upgrade.php --non-interactive
 ```
 
