@@ -1,10 +1,37 @@
 /* @copyright 2026 Didactika.org
  * @author Hector Arrechea <hectorlazaroarrechea@gmail.com>
- * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later */
-.multipicker-browser { display: flex; flex-direction: column; height: min(70vh, 45rem); min-height: 20rem; }
-.multipicker-browser .multipicker-results { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; }
-.multipicker-browser .multipicker-name { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; min-height: 2.5em; }
-.multipicker-browser [data-multipicker-card] { cursor: pointer; }
-.multipicker-browser [data-multipicker-card].border-primary { background-color: var(--bs-primary-bg-subtle, #eef6ff); }
-.multipicker-browser [data-multipicker-card]:hover { border-color: var(--bs-primary, #0f6cbf); }
-.multipicker-browser [aria-busy="true"] { opacity: .45; pointer-events: none; }
+ * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+.multipicker-browser {
+    display: flex;
+    flex-direction: column;
+    height: 70vh;
+    max-height: 45rem;
+    min-height: 20rem;
+}
+.multipicker-browser .multipicker-results {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+.multipicker-browser .multipicker-name {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    min-height: 2.5em;
+}
+.multipicker-browser [data-multipicker-card] {
+    cursor: pointer;
+}
+.multipicker-browser [data-multipicker-card].border-primary {
+    background-color: var(--bs-primary-bg-subtle, #eef6ff);
+}
+.multipicker-browser [data-multipicker-card]:hover {
+    border-color: var(--bs-primary, #0f6cbf);
+}
+.multipicker-browser [aria-busy="true"] {
+    opacity: .45;
+    pointer-events: none;
+}

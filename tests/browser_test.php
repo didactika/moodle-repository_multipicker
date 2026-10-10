@@ -31,6 +31,7 @@ use repository_multipicker\local\browser;
  *
  * @covers \repository_multipicker\local\browser
  */
+#[\PHPUnit\Framework\Attributes\CoversClass(browser::class)]
 final class browser_test extends \advanced_testcase {
     /**
      * Create public folder materials and a native draft.
