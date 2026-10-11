@@ -64,8 +64,10 @@ if (optional_param('ajax', 0, PARAM_BOOL)) {
                 throw new moodle_exception('unavailable', 'repository_multipicker');
             }
             $data = \repository_multipicker\output\review::level(
-                $snapshot['operations'], optional_param('aliases', false, PARAM_BOOL),
-                optional_param('path', '/', PARAM_PATH), optional_param('page', 0, PARAM_INT)
+                $snapshot['operations'],
+                optional_param('aliases', false, PARAM_BOOL),
+                optional_param('path', '/', PARAM_PATH),
+                optional_param('page', 0, PARAM_INT)
             );
             echo json_encode(['html' => $renderer->render_from_template('repository_multipicker/browser/review', $data)]);
         } else if ($action === 'list') {
@@ -77,7 +79,8 @@ if (optional_param('ajax', 0, PARAM_BOOL)) {
             );
             echo json_encode(['html' => $renderer->render_from_template('repository_multipicker/browser/results', $listing),
                 'parent' => $listing['parent'], 'page' => $listing['page'], 'next' => $listing['next'],
-                'previous' => $listing['previous'], 'location' => $listing['location']]);
+                'previous' => $listing['previous'], 'location' => $listing['location'],
+                'sources' => $listing['selection'] ?? null]);
         } else if (in_array($action, ['inspect', 'review', 'approve'], true)) {
             $sources = required_param_array('sources', PARAM_RAW);
             $maxfiles = required_param('maxfiles', PARAM_INT);
@@ -93,8 +96,8 @@ if (optional_param('ajax', 0, PARAM_BOOL)) {
             $removed = optional_param_array('removed', [], PARAM_RAW);
             if ($removed) {
                 $kept = optional_param_array('kept', [], PARAM_RAW);
-                $excluded = array_values(array_unique(array_merge($excluded,
-                    \repository_multipicker\local\preview::exclusions($snapshot['operations'], $removed, $kept))));
+                $changes = \repository_multipicker\local\preview::exclusions($snapshot['operations'], $removed, $kept);
+                $excluded = array_values(array_unique(array_merge($excluded, $changes)));
                 $options['excluded'] = $excluded;
                 $snapshot = \repository_multipicker\local\preview::prepare($token, $scope, $options);
             }

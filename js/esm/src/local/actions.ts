@@ -21,6 +21,7 @@ export const createActions = (root: HTMLElement) => {
     const selected = new Set<string>();
     const excluded = new Set<string>();
     const parents = new Map<string, string>();
+    let listingSources: string[] | undefined;
     let folderCounts: Record<string, number> = {};
     const reviewChecks = new Map<string, boolean>();
     const reviewPaths = new Map<string, string>();
@@ -125,6 +126,7 @@ export const createActions = (root: HTMLElement) => {
         const requestedQuery = query;
         const response = await request(scope, {action: 'list', path, page, query, draftid: options()?.itemid || 0});
         if (requestedQuery !== query) { pendingSearch = true; return; }
+        listingSources = response.sources;
         results.innerHTML = response.html!;
         registerChildren(results, path);
         parent = response.parent || '';
@@ -226,8 +228,8 @@ export const createActions = (root: HTMLElement) => {
         selectAll: () => run(async () => {
             const old = [...selected], oldExcluded = [...excluded];
             try {
-                const response = await request(scope, {action: 'selectall', path, query,
-                    draftid: options()?.itemid || 0});
+                const response = !query && listingSources ? {sources: listingSources}
+                    : await request(scope, {action: 'selectall', path, query, draftid: options()?.itemid || 0});
                 (response.sources || []).forEach(source => {
                     selected.add(source);
                     parents.set(source, path);

@@ -85,3 +85,20 @@ Feature: Import a standalone Server files batch into a native folder
     And I press "Save changes"
     Then I should see "first.txt"
     And I should not see "second.txt"
+
+  Scenario: Review lazily opens folders and deletes individual files
+    Given standalone MultiPicker test materials exist
+    And I am on the "Destination files" "folder activity" page logged in as "spteacher"
+    When I press "Edit"
+    And I open standalone MultiPicker
+    And I select the standalone source directory contents
+    And I review standalone MultiPicker files
+    Then standalone review loads branches on demand and deletes individual files
+
+  Scenario: Long names are clamped and source navigation shows a full route
+    Given standalone MultiPicker test materials exist
+    And standalone source has a long filename
+    And I am on the "Destination files" "folder activity" page logged in as "spteacher"
+    When I press "Edit"
+    And I open standalone MultiPicker
+    Then standalone long names occupy at most two lines in every view

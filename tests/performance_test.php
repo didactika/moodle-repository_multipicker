@@ -75,20 +75,28 @@ final class performance_test extends \advanced_testcase {
         $this->assertCount(2, $operations);
         foreach ($operations as $operation) {
             $this->assertLessThanOrEqual(255, \core_text::strlen($operation['filepath']));
-            $this->assertLessThan(3, substr_count($operation['filepath'], str_repeat('中', 10)));
+            $this->assertStringContainsString('-', $operation['filepath']);
         }
         $SESSION->repository_multipicker['performance'] += ['sources' => [$source], 'approval' => $operations,
             'maxfiles' => 10, 'basepath' => '/'];
         browser::apply('performance', ['itemid' => $scope['draftid']], -1, -1);
-        $files = get_file_storage()->get_area_files(\context_user::instance($USER->id)->id,
-            'user', 'draft', $scope['draftid'], 'id', false);
+        $files = get_file_storage()->get_area_files(
+            \context_user::instance($USER->id)->id,
+            'user',
+            'draft',
+            $scope['draftid'],
+            'id',
+            false
+        );
         $this->assertCount(2, $files);
         foreach ($files as $file) {
             $this->assertSame($file->get_filename(), $file->get_content());
             $this->assertSame('Source author', $file->get_author());
         }
-        $this->assertNotSame(destination_path::make('/', str_repeat('Long name ', 20)),
-            destination_path::make('/', str_repeat('Long name ', 20) . 'different'));
+        $this->assertNotSame(
+            destination_path::make('/', str_repeat('Long name ', 20)),
+            destination_path::make('/', str_repeat('Long name ', 20) . 'different')
+        );
         $this->assertSame('/plain/nested/', destination_path::make('/plain/', 'nested/'));
         $this->assertLessThanOrEqual(255, \core_text::strlen(destination_path::make('/', str_repeat('deep/', 100))));
     }
@@ -99,21 +107,32 @@ final class performance_test extends \advanced_testcase {
     public function test_display_snapshot_avoids_repeated_walk_and_approval_rechecks(): void {
         global $DB;
         [$scope, $source] = $this->fixture();
-        $options = ['sources' => [$source], 'maxfiles' => 10, 'basepath' => '/',
+        for ($index = 0; $index < 250; $index++) {
+            get_file_storage()->create_file_from_string(['contextid' => $scope['contextid'], 'component' => 'mod_folder',
+                'filearea' => 'content', 'itemid' => 0, 'filepath' => '/bulk/', 'filename' => 'bulk' . $index . '.txt'], 'bulk');
+        }
+        $options = ['sources' => [$source], 'maxfiles' => 1000, 'basepath' => '/',
             'preservefolders' => true, 'excluded' => []];
         $before = $DB->perf_get_queries();
         $first = preview::prepare('performance', $scope, $options);
+        $this->assertCount(252, $first['operations']);
         $walkqueries = $DB->perf_get_queries() - $before;
         $before = $DB->perf_get_queries();
         $second = preview::prepare('performance', $scope, $options);
         $this->assertSame($first['operations'], $second['operations']);
         $this->assertLessThan($walkqueries, $DB->perf_get_queries() - $before);
         $params = browser::source($first['operations'][0]['source'])->get_params();
-        $file = get_file_storage()->get_file($params['contextid'], $params['component'], $params['filearea'],
-            $params['itemid'], $params['filepath'], $params['filename']);
+        $file = get_file_storage()->get_file(
+            $params['contextid'],
+            $params['component'],
+            $params['filearea'],
+            $params['itemid'],
+            $params['filepath'],
+            $params['filename']
+        );
         $file->delete();
         $fresh = preview::prepare('performance', $scope, $options, true);
-        $this->assertCount(1, $fresh['operations']);
+        $this->assertCount(count($first['operations']) - 1, $fresh['operations']);
     }
 
     /**

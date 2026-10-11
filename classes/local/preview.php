@@ -38,9 +38,13 @@ final class preview {
      */
     public static function prepare(string $token, array $scope, array $options, bool $fresh = false): array {
         global $SESSION, $DB, $USER;
-        $draft = $DB->get_records('files', ['contextid' => \context_user::instance($USER->id)->id,
-            'component' => 'user', 'filearea' => 'draft', 'itemid' => $scope['draftid']], 'id',
-            'id, filepath, filename, contenthash, filesize, timemodified, author, license');
+        $draft = $DB->get_records(
+            'files',
+            ['contextid' => \context_user::instance($USER->id)->id,
+                'component' => 'user', 'filearea' => 'draft', 'itemid' => $scope['draftid']],
+            'id',
+            'id, filepath, filename, contenthash, filesize, timemodified, author, license'
+        );
         $signature = hash('sha256', json_encode([$options, $draft]));
         $snapshot = $SESSION->repository_multipicker[$token]['preview'] ?? null;
         if (!$fresh && $snapshot && $snapshot['signature'] === $signature && $snapshot['expires'] >= time()) {
@@ -50,8 +54,15 @@ final class preview {
             return $snapshot;
         }
         $counts = [];
-        $operations = browser::review($scope, $options['sources'], $options['maxfiles'], $options['basepath'],
-            $options['preservefolders'], $options['excluded'], $counts);
+        $operations = browser::review(
+            $scope,
+            $options['sources'],
+            $options['maxfiles'],
+            $options['basepath'],
+            $options['preservefolders'],
+            $options['excluded'],
+            $counts
+        );
         $snapshot = ['operations' => $operations, 'counts' => $counts, 'signature' => $signature, 'expires' => time() + 15];
         $SESSION->repository_multipicker[$token]['preview'] = $snapshot;
         return $snapshot;

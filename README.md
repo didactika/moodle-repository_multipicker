@@ -63,6 +63,12 @@ Destination limits come from the owning filemanager. A folder that would exceed 
 
 Folder badges count the resulting selected files. The tree opens directories on demand and shares the same selection as cards and list. Folder preservation also retains the source-relative path of individually selected files; disable it to copy directly into the destination path.
 
+## Large selections and long paths
+
+Select all includes all accessible results in the current directory or search. Review starts with collapsed folders and loads their direct children on demand, 30 rows at a time. File counts cover the whole selection, and folder removal includes unopened descendants. Individual files and folders also have a remove icon.
+
+The chooser respects native destination limits and bounds traversal to 500 selected roots, 10,000 visited nodes and 5,000 resulting files. Long source folder names are abbreviated consistently to fit Moodle's native destination path field. Very deep tails may be grouped under one abbreviated directory; filenames, content and source metadata are preserved. Approval and import always recheck live sources and the destination.
+
 ## Troubleshooting
 
 | Problem | Check |

@@ -13,6 +13,7 @@ const createActions = /* @__PURE__ */ __name((root) => {
   const selected = /* @__PURE__ */ new Set();
   const excluded = /* @__PURE__ */ new Set();
   const parents = /* @__PURE__ */ new Map();
+  let listingSources;
   let folderCounts = {};
   const reviewChecks = /* @__PURE__ */ new Map();
   const reviewPaths = /* @__PURE__ */ new Map();
@@ -138,6 +139,7 @@ const createActions = /* @__PURE__ */ __name((root) => {
       pendingSearch = true;
       return;
     }
+    listingSources = response.sources;
     results.innerHTML = response.html;
     registerChildren(results, path);
     parent = response.parent || "";
@@ -270,12 +272,7 @@ const createActions = /* @__PURE__ */ __name((root) => {
     selectAll: /* @__PURE__ */ __name(() => run(async () => {
       const old = [...selected], oldExcluded = [...excluded];
       try {
-        const response = await request(scope, {
-          action: "selectall",
-          path,
-          query,
-          draftid: options()?.itemid || 0
-        });
+        const response = !query && listingSources ? { sources: listingSources } : await request(scope, { action: "selectall", path, query, draftid: options()?.itemid || 0 });
         (response.sources || []).forEach((source) => {
           selected.add(source);
           parents.set(source, path);
