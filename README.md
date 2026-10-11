@@ -60,6 +60,8 @@ The **repository/multipicker:view** capability permits use of the chooser. Editi
 
 Destination limits come from the owning filemanager. A folder that would exceed those limits is rejected before import. Aliases remain linked to their original source and are offered only when the control permits references.
 
+Folder badges count the resulting selected files. The tree opens directories on demand and shares the same selection as cards and list. Folder preservation also retains the source-relative path of individually selected files; disable it to copy directly into the destination path.
+
 ## Troubleshooting
 
 | Problem | Check |

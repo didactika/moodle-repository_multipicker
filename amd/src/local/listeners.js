@@ -50,7 +50,13 @@ export const register = (root, actions) => {
         const layout = target.closest(Selectors.layout);
         const more = target.closest(Selectors.treePage);
         const reviewToggle = target.closest(Selectors.reviewToggle);
-        if (reviewToggle) {
+        const reviewDelete = target.closest(Selectors.reviewDelete);
+        const reviewPage = target.closest(Selectors.reviewPage);
+        if (reviewDelete) {
+            actions.remove([reviewDelete.dataset.multipickerDelete]);
+        } else if (reviewPage) {
+            actions.reviewPage(reviewPage);
+        } else if (reviewToggle) {
             actions.reviewToggle(reviewToggle);
         } else if (open) {
             actions.open(open);

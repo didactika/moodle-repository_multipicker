@@ -10,7 +10,7 @@
 .multipicker-native-host .fp-content {
     /* Native YUI applies an inline height; retain a stable chooser viewport. */
     /* stylelint-disable-next-line declaration-no-important, csstree/validator */
-    height: min(76vh, 48rem) !important;
+    height: min(72vh, 48rem) !important;
     /* Embedded controls replace the native navbar's height allowance on newer cores. */
     /* stylelint-disable-next-line declaration-no-important */
     max-height: none !important;
@@ -48,56 +48,119 @@ body.multipicker-embedded,
     overflow: auto;
     padding: 0.2rem;
 }
-.multipicker-copy-options,
-.multipicker-items {
+.multipicker-copy-options {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.6rem;
 }
+.multipicker-items {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+    align-items: start;
+}
 .multipicker-node {
     min-width: 0;
 }
-.multipicker-browser[data-layout="cards"] .card {
-    height: 100%;
+.multipicker-browser [data-multipicker-card] {
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: border-color 0.15s, background-color 0.15s;
 }
-.multipicker-browser[data-layout="cards"] .multipicker-card-tools {
-    min-height: 2rem;
+.multipicker-browser .card-body {
+    gap: 0.5rem;
+}
+.multipicker-browser [data-multipicker-check] {
+    width: 1.1rem;
+    height: 1.1rem;
+    margin-top: 0.3rem;
+    flex-shrink: 0;
+}
+.multipicker-card-content {
+    display: grid;
+    grid-template-rows: 1.5rem 2.6rem auto;
+    min-width: 0;
+    flex: 1;
+}
+.multipicker-card-tools {
+    gap: 0.4rem;
+}
+.multipicker-card-tools .icon {
+    width: 1.1rem;
+    height: 1.1rem;
+    margin: 0;
 }
 .multipicker-browser .multipicker-name {
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
     overflow: hidden;
-    height: 2.7em;
+    height: 2.6em;
+    max-height: 2.6em;
+    line-height: 1.3;
+    font-size: 0.9rem;
+    font-weight: 600;
     overflow-wrap: anywhere;
 }
 .multipicker-browser .multipicker-meta {
     min-height: 2rem;
     overflow-wrap: anywhere;
+    font-size: 0.7rem;
+    gap: 0.35rem;
+    align-content: start;
 }
-.multipicker-browser [data-multipicker-card] {
-    cursor: pointer;
+.multipicker-chip {
+    display: inline-block;
+    border-radius: 1rem;
+    padding: 0.15rem 0.5rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--bs-primary, #0f6cbf);
+    background: #e2edf7;
 }
 .multipicker-browser [data-multipicker-card].border-primary,
 .multipicker-browser [data-multipicker-card]:hover {
     background: var(--bs-primary-bg-subtle, #eef6ff);
     border-color: var(--bs-primary, #0f6cbf);
 }
+.multipicker-browser [data-multipicker-card]:focus-within {
+    border-color: var(--bs-primary, #0f6cbf);
+}
 .multipicker-browser .multipicker-open {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 2rem;
-    height: 2rem;
+    width: 1.8rem;
+    min-width: 1.8rem;
+    height: 1.8rem;
     padding: 0;
+    border: 0;
+    border-radius: 0.5rem;
+    line-height: 1;
+    flex-shrink: 0;
     background: #e2edf7;
     color: var(--bs-primary, #0f6cbf);
 }
 .multipicker-browser .multipicker-open:hover {
     background: #cbdfee;
 }
-.multipicker-browser .multipicker-open .icon {
+.multipicker-browser .multipicker-open:focus-visible {
+    outline: 2px solid var(--bs-primary, #0f6cbf);
+    outline-offset: 2px;
+}
+.multipicker-browser .multipicker-open .icon,
+.multipicker-back .icon,
+.multipicker-browser .btn-group .icon {
     margin: 0;
+}
+.multipicker-browser .multipicker-open .icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 0.85rem;
+    height: 0.85rem;
+    font-size: 0.85rem;
+    line-height: 1;
 }
 .multipicker-browser[data-layout="cards"] .multipicker-children,
 .multipicker-browser[data-layout="list"] .multipicker-children {
@@ -111,32 +174,29 @@ body.multipicker-embedded,
 .multipicker-browser[data-layout="tree"] .multipicker-node {
     margin-bottom: 0.4rem;
 }
-.multipicker-browser[data-layout="list"] .card-body {
-    display: grid;
-    grid-template-columns: 7rem minmax(0, 1fr) 8rem;
-    gap: 0.6rem;
-    align-items: center;
+.multipicker-open-tree {
+    display: none;
 }
-.multipicker-browser[data-layout="list"] .multipicker-name,
-.multipicker-browser[data-layout="tree"] .multipicker-name {
-    height: auto;
+.multipicker-browser[data-layout="tree"] .multipicker-open {
+    order: -1;
 }
-.multipicker-browser[data-layout="list"] .multipicker-meta {
-    border-top: 0;
+.multipicker-browser[data-layout="tree"] .multipicker-open-navigation {
+    display: none;
+}
+.multipicker-browser[data-layout="tree"] .multipicker-open-tree {
+    display: inline-flex;
+}
+.multipicker-browser[data-layout="tree"] .multipicker-open[aria-expanded="true"] .multipicker-open-tree {
+    transform: rotate(90deg);
 }
 .multipicker-browser[data-layout="tree"] .card {
     border-color: transparent;
 }
-.multipicker-browser[data-layout="tree"] .card-body {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
+.multipicker-browser[data-layout="tree"] .multipicker-card-content {
+    grid-template-rows: auto auto auto;
 }
-.multipicker-browser[data-layout="tree"] .multipicker-card-tools {
-    flex-shrink: 0;
-}
-.multipicker-browser[data-layout="tree"] .multipicker-meta {
-    display: none;
+.multipicker-browser[data-layout="tree"] .multipicker-name {
+    height: auto;
 }
 .multipicker-browser [aria-busy="true"] {
     opacity: 0.55;
@@ -151,10 +211,19 @@ body.multipicker-embedded,
     .multipicker-items {
         grid-template-columns: minmax(0, 1fr);
     }
-    .multipicker-browser[data-layout="list"] .card-body {
-        grid-template-columns: 5rem minmax(0, 1fr);
-    }
-    .multipicker-browser[data-layout="list"] .multipicker-meta {
-        grid-column: 2;
-    }
+}
+
+.multipicker-reviewname {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.multipicker-browser [data-multipicker-remove] .icon,
+.multipicker-browser [data-multipicker-delete] .icon,
+.multipicker-browser [data-multipicker-reviewtoggle] .icon {
+    margin: 0;
+}
+.multipicker-browser [data-multipicker-reviewtoggle][aria-expanded="true"] .icon {
+    transform: rotate(90deg);
 }

@@ -53,8 +53,8 @@ final class browser_test extends \advanced_testcase {
         $scope = ['userid' => $USER->id, 'expires' => time() + 3600, 'draftid' => file_get_unused_draft_itemid(),
             'types' => ['*'], 'maxbytes' => -1, 'areamaxbytes' => -1, 'contextid' => $context->id];
         $SESSION->repository_multipicker['test'] = $scope;
-        $source = base64_encode(json_encode(['contextid' => $context->id, 'component' => 'mod_folder',
-            'filearea' => 'content', 'itemid' => 0, 'filepath' => '/', 'filename' => '.']));
+        $directory = get_file_browser()->get_file_info($context, 'mod_folder', 'content', 0, '/', '.');
+        $source = base64_encode(json_encode($directory->get_params()));
         return [$scope, $source];
     }
 
@@ -64,8 +64,18 @@ final class browser_test extends \advanced_testcase {
     public function test_recursive_import_preserves_metadata_and_rejects_replay(): void {
         global $SESSION, $USER;
         [$scope, $source] = $this->fixture();
-        $files = browser::review($scope, [$source, $source], 2, '/');
+        $counts = [];
+        $files = browser::review($scope, [$source, $source], 2, '/', true, [], $counts);
         $this->assertCount(2, $files);
+        $this->assertSame(2, $counts[$source]);
+        $nested = browser::review($scope, [$files[0]['source']], 2, '/');
+        $this->assertSame('/nested/', $nested[0]['filepath']);
+        $flat = browser::review($scope, [$files[0]['source']], 2, '/', false);
+        $this->assertSame('/', $flat[0]['filepath']);
+        browser::review($scope, [$source, $files[0]['source']], 2, '/', true, [], $counts);
+        $this->assertSame(2, $counts[$source]);
+        browser::review($scope, [$source], 2, '/', true, [$files[0]['source']], $counts);
+        $this->assertSame(1, $counts[$source]);
         $SESSION->repository_multipicker['test'] += ['sources' => [$source], 'approval' => $files,
             'maxfiles' => 2, 'basepath' => '/'];
         browser::apply('test', ['itemid' => $scope['draftid']], -1, -1);

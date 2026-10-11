@@ -8,3 +8,5 @@
 <ul class="list-unstyled multipicker-reviewtree">
     {{#nodes}}{{> repository_multipicker/browser/review_node}}{{/nodes}}
 </ul>
+
+{{#next}}<button type="button" class="btn btn-sm btn-link" data-multipicker-reviewpage="{{nextpage}}" data-path="{{path}}">{{#str}}next, core{{/str}}</button>{{/next}}

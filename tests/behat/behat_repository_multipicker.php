@@ -186,6 +186,21 @@ class behat_repository_multipicker extends behat_base {
         ) {
             throw new Exception('The native Server files source directory did not load.');
         }
+        foreach ([1, 0, 1] as $index => $expected) {
+            $selector = $index === 2 ? '.multipicker-name' : '[data-multipicker-check]';
+            $this->getSession()->getDriver()->executeScript(
+                'const doc=document.querySelector(".fp-object-container").contentDocument;'
+                    . '[...doc.querySelectorAll("[data-multipicker-card]")].find(node=>'
+                    . 'node.querySelector(".multipicker-name").textContent.trim()==="first.txt")'
+                    . '.querySelector(' . json_encode($selector) . ').click();'
+            );
+            $this->wait_selection_count($expected);
+        }
+        $this->getSession()->getDriver()->executeScript(
+            'document.querySelector(".fp-object-container").contentDocument'
+                . '.querySelector("[data-multipicker-clear]").click();'
+        );
+        $this->wait_selection_count(0);
         $this->getSession()->getDriver()->executeScript(
             'document.querySelector(".fp-object-container").contentDocument'
                 . '.querySelector("[data-multipicker-selectall]").click();'
@@ -198,6 +213,24 @@ class behat_repository_multipicker extends behat_base {
             )
         ) {
             throw new Exception('The recursive native selection did not complete.');
+        }
+    }
+
+    /**
+     * Wait for server validation of a direct checkbox, card or directory change.
+     * @param int $count Expected number of resulting files.
+     */
+    private function wait_selection_count(int $count): void {
+        if (
+            !$this->getSession()->wait(
+                10000,
+                '(()=>{const doc=document.querySelector(".fp-object-container").contentDocument;'
+                    . 'return !doc.querySelector("[aria-busy=true]")'
+                    . '&&doc.querySelector("[data-multipicker-count]").textContent==='
+                    . json_encode((string)$count) . ';})()'
+            )
+        ) {
+            throw new Exception('Direct file and directory checks do not share the resulting selection.');
         }
     }
 
@@ -262,12 +295,30 @@ class behat_repository_multipicker extends behat_base {
                 ) {
                     throw new Exception('Lazy tree did not reach the actual file.');
                 }
+                $changes = ['clear' => 0, 'second.txt' => 1, 'nested' => 0, 'second.txt-again' => 1, 'first.txt' => 2];
+                foreach ($changes as $name => $expected) {
+                    $this->getSession()->getDriver()->executeScript(
+                        'const doc=document.querySelector(".fp-object-container").contentDocument;'
+                        . ($name === 'clear' ? 'doc.querySelector("[data-multipicker-clear]").click();'
+                            : '[...doc.querySelectorAll("[data-multipicker-card]")].find(node=>'
+                                . 'node.querySelector(".multipicker-name").textContent.trim()==='
+                                . json_encode(str_replace('-again', '', $name))
+                                . ').querySelector("[data-multipicker-check]").click();')
+                    );
+                    $this->wait_selection_count($expected);
+                }
             }
             $valid = $this->getSession()->getDriver()->evaluateScript(
                 '(()=>{const doc=document.querySelector(".fp-object-container").contentDocument;'
                     . 'return doc.querySelector("[data-multipicker-count]").textContent==="2"'
                     . '&&[...doc.querySelectorAll("[data-multipicker-check]")].every(check=>check.checked)'
                     . '&&doc.querySelectorAll("[data-multipicker-layout].active").length===1'
+                    . '&&[...doc.querySelectorAll("[data-multipicker-open]")].every(button=>'
+                    . '(doc.querySelector("[data-multipicker-root]").dataset.layout==="tree"||button.getBoundingClientRect().right>'
+                    . 'button.closest("[data-multipicker-card]").getBoundingClientRect().right-20))'
+                    . '&&[...doc.querySelectorAll("[data-multipicker-folder-count]")].every(badge=>'
+                    . 'badge.textContent.trim()==="1 selected")'
+                    . '&&doc.querySelector("[data-multipicker-back]").classList.contains("btn-outline-secondary")'
                     . '&&doc.querySelector("[data-multipicker-layout].active").dataset.multipickerLayout==='
                     . json_encode($view) . ';})()'
             );

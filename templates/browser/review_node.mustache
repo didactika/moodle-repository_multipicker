@@ -3,21 +3,16 @@
     @copyright 2026 Didactika.org
     @author Hector Arrechea <hectorlazaroarrechea@gmail.com>
     @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
-    Example context (json): {"name":"Example file", "source":"example", "standalone":true}
+    Example context (json): {"name":"Example file", "source":"example", "path":"/"}
 }}
-{{#standalone}}<ul class="list-unstyled">{{/standalone}}
-<li data-multipicker-reviewnode>
+<li data-multipicker-reviewnode data-path="{{path}}">
     <div class="d-flex align-items-center py-2 border-bottom" data-multipicker-reviewrow>
         <input type="checkbox" class="mr-2" value="{{source}}" data-multipicker-reviewcheck aria-label="{{name}}" {{#folder}}data-multipicker-reviewgroup{{/folder}}>
-        {{#folder}}<button type="button" class="btn btn-sm btn-link px-1 mr-1" data-multipicker-reviewtoggle aria-expanded="true" aria-label="{{#str}}open, repository_multipicker{{/str}}">{{#pix}}t/expanded, core{{/pix}}</button>{{#pix}}f/folder, core{{/pix}}{{/folder}}
+        {{#folder}}<button type="button" class="btn btn-sm btn-link px-1 mr-1" data-multipicker-reviewtoggle aria-expanded="false" aria-label="{{#str}}open, repository_multipicker{{/str}}">{{#pix}}t/collapsed, core{{/pix}}</button>{{#pix}}f/folder, core{{/pix}}{{/folder}}
         {{^folder}}{{#pix}}f/document, core{{/pix}}{{/folder}}
-        <strong class="small text-break ml-1">{{name}}</strong>
-        {{^folder}}<span class="badge badge-light ml-auto">{{#aliases}}{{#str}}reference, repository_multipicker{{/str}}{{/aliases}}{{^aliases}}{{#str}}copy, repository_multipicker{{/str}}{{/aliases}}</span>{{/folder}}
+        <strong class="small multipicker-reviewname ml-1" title="{{name}}">{{name}}</strong>
+        <span class="badge ml-auto">{{#folder}}{{count}}{{/folder}}{{^folder}}{{#aliases}}{{#str}}reference, repository_multipicker{{/str}}{{/aliases}}{{^aliases}}{{#str}}copy, repository_multipicker{{/str}}{{/aliases}}{{/folder}}</span>
+        <button type="button" class="btn btn-sm btn-link text-danger ml-1" data-multipicker-delete="{{source}}" title="{{#str}}remove, repository_multipicker{{/str}}" aria-label="{{#str}}remove, repository_multipicker{{/str}}">{{#pix}}t/delete, core{{/pix}}</button>
     </div>
-    {{#folder}}
-    <ul class="list-unstyled ml-3 pl-2 border-left" data-multipicker-reviewchildren>
-        {{#children}}{{> repository_multipicker/browser/review_node}}{{/children}}
-    </ul>
-    {{/folder}}
+    {{#folder}}<div class="ml-3 pl-2 border-left" data-multipicker-reviewchildren hidden></div>{{/folder}}
 </li>
-{{#standalone}}</ul>{{/standalone}}
