@@ -9,15 +9,34 @@ var __name = (target, value) => __defProp(target, "name", { value, configurable:
 const options = /* @__PURE__ */ __name(() => window.parent.M?.core_filepicker?.active_filepicker?.options, "options");
 const mount = /* @__PURE__ */ __name((root) => {
   document.body.classList.add("multipicker-embedded");
-  const host = window.frameElement?.closest(".file-picker");
-  if (host) {
+  const parent = window.parent;
+  const object = window.frameElement;
+  const host = object?.closest(".file-picker");
+  if (object && host) {
+    object.multipickerPresentationCleanup?.();
     host.classList.add("multipicker-native-host");
-    const background = window.parent.getComputedStyle(host).backgroundColor;
+    const background = parent.getComputedStyle(host).backgroundColor;
     if (background !== "rgba(0, 0, 0, 0)") {
       root.style.setProperty("--multipicker-background", background);
       document.body.style.setProperty("--multipicker-background", background);
     }
-    window.addEventListener("pagehide", () => host.classList.remove("multipicker-native-host"), { once: true });
+    const observer = new parent.MutationObserver(() => {
+      if (!object.isConnected) {
+        release();
+      }
+    });
+    const release = /* @__PURE__ */ __name(() => {
+      observer.disconnect();
+      host.classList.remove("multipicker-native-host");
+      delete object.multipickerPresentationCleanup;
+    }, "release");
+    object.multipickerPresentationCleanup = release;
+    observer.observe(object.parentElement, { childList: true });
+    window.addEventListener("pagehide", () => {
+      if (!object.isConnected) {
+        release();
+      }
+    }, { once: true });
   }
 }, "mount");
 export {

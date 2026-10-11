@@ -3,6 +3,19 @@ Feature: Import a standalone Server files batch into a native folder
   As an editing teacher
   I need multiple files and recursive directories without a local companion
 
+  @picker_presentation
+  Scenario: Switching repositories restores the native header and content size
+    Given standalone MultiPicker test materials exist
+    And I am on the "Destination files" "folder activity" page logged in as "spteacher"
+    When I press "Edit"
+    And I open standalone MultiPicker
+    Then standalone presentation should follow the active native repository
+    When I select the standalone source directory contents
+    And I review standalone MultiPicker files
+    And I import standalone MultiPicker files
+    And I press "Save changes"
+    Then I should see "first.txt"
+
   Scenario: Native aliases retain both files and their source declarations
     Given standalone MultiPicker test materials exist
     And I am on the "Destination files" "folder activity" page logged in as "spteacher"
