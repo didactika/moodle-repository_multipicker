@@ -9,3 +9,7 @@
 - Shared recursive selection, native limits, folder preservation and copy or alias imports.
 - Reusable browsing scopes with one-time approval identifiers and atomic draft copies.
 - Fixed translated repository name and the provided plugin icon.
+- Preserve direct checkbox/card intent during asynchronous validation and synchronize directory/child selection across all views.
+- Retain source-relative paths for individual files and count overlapping selections once in directory badges.
+- Match FileBank card footers, compact list navigation, native Back controls and leading tree expanders.
+- Restore native presentation through a parent-loaded lifecycle adapter that survives Chrome document replacement.

@@ -21,6 +21,9 @@ export const createActions = (root: HTMLElement) => {
     const selected = new Set<string>();
     const excluded = new Set<string>();
     const parents = new Map<string, string>();
+    let folderCounts: Record<string, number> = {};
+    const reviewChecks = new Map<string, boolean>();
+    const reviewPaths = new Map<string, string>();
     const scope = root.dataset.scope!;
     const element = <T extends HTMLElement = HTMLElement>(selector: string) => root.querySelector<T>(selector)!;
     const results = element(Selectors.results);
@@ -35,11 +38,45 @@ export const createActions = (root: HTMLElement) => {
         }
         return false;
     };
+    const isSelected = (source: string) => {
+        for (let depth = 0; source && depth < 100; depth++) {
+            if (excluded.has(source)) { return false; }
+            if (selected.has(source)) { return true; }
+            source = parents.get(source) || '';
+        }
+        return false;
+    };
+    const reviewedState = (check: HTMLInputElement) => {
+        if (reviewChecks.has(check.value)) { return reviewChecks.get(check.value); }
+        const path = check.closest<HTMLElement>(Selectors.reviewNode)!.dataset.path || '/';
+        let state = false, length = -1;
+        reviewChecks.forEach((selected, key) => {
+            if (key.startsWith('folder:') && path.startsWith(key.slice(7)) && key.length > length) {
+                state = selected;
+                length = key.length;
+            }
+        });
+        return state;
+    };
     const sync = () => {
         root.querySelectorAll<HTMLInputElement>(Selectors.check).forEach(check => {
-            check.checked = belongs(check.value, selected) && !belongs(check.value, excluded);
+            check.checked = isSelected(check.value);
+            check.indeterminate = false;
             check.disabled = busy;
             check.closest<HTMLElement>(Selectors.card)!.classList.toggle('border-primary', check.checked);
+        });
+        // Derive visible directory state without fetching unopened descendants.
+        [...root.querySelectorAll<HTMLElement>(Selectors.node)].reverse().forEach(node => {
+            const children = node.querySelector<HTMLElement>(Selectors.children);
+            const check = node.querySelector<HTMLInputElement>(Selectors.check);
+            if (!children || !check) { return; }
+            const files = [...children.querySelectorAll<HTMLInputElement>(Selectors.check)];
+            const any = files.some(file => file.checked || file.indeterminate);
+            const all = files.length > 0 && files.every(file => file.checked && !file.indeterminate);
+            check.indeterminate = children.dataset.complete === 'true'
+                ? any && !all : !check.checked && (folderCounts[check.value] || 0) > 0;
+            if (children.dataset.complete === 'true') { check.checked = all; }
+            check.closest<HTMLElement>(Selectors.card)!.classList.toggle('border-primary', check.checked || check.indeterminate);
         });
         element(Selectors.count).textContent = String(count);
         element<HTMLButtonElement>(Selectors.review).disabled = !count || busy;
@@ -53,11 +90,23 @@ export const createActions = (root: HTMLElement) => {
         element(Selectors.pagination).classList.toggle('d-flex', !review);
         element<HTMLButtonElement>(Selectors.back).hidden = !review && !parent;
         element<HTMLButtonElement>(Selectors.clearSearch).disabled = !query;
-        element<HTMLButtonElement>(Selectors.remove).hidden = !review ||
-            !root.querySelector(Selectors.reviewCheck + ':checked');
+        element<HTMLButtonElement>(Selectors.remove).hidden = !review || ![...reviewChecks.values()].some(Boolean);
         element<HTMLButtonElement>(Selectors.remove).disabled = busy;
-        root.querySelectorAll<HTMLElement>('.multipicker-meta').forEach(metadata => {
-            ['border-top', 'pt-2', 'mt-2'].forEach(style => metadata.classList.toggle(style, root.dataset.layout === 'cards'));
+        root.querySelectorAll<HTMLInputElement>(Selectors.reviewCheck).forEach(check => {
+            const path = check.closest<HTMLElement>(Selectors.reviewNode)!.dataset.path || '/';
+            reviewPaths.set(check.value, path);
+            check.checked = !!reviewedState(check);
+            check.indeterminate = false;
+            if (check.matches(Selectors.reviewGroup)) {
+                reviewChecks.forEach((state, key) => {
+                    if (key !== check.value && (reviewPaths.get(key) || key.slice(7)).startsWith(path)
+                            && state !== check.checked) { check.indeterminate = true; }
+                });
+            }
+        });
+        root.querySelectorAll<HTMLElement>('[data-multipicker-folder-count]').forEach(badge => {
+            const total = folderCounts[badge.dataset.multipickerFolderCount!] || 0;
+            badge.textContent = root.dataset.folderselection!.replace('{$a}', String(total));
         });
     };
     const fields = (action: string) => {
@@ -82,6 +131,7 @@ export const createActions = (root: HTMLElement) => {
         element<HTMLButtonElement>(Selectors.previous).hidden = !response.previous;
         element<HTMLButtonElement>(Selectors.next).hidden = !response.next;
         element(Selectors.location).textContent = response.location || '';
+        element(Selectors.location).title = response.location || '';
         review = false;
     };
     const run = async (operation: () => Promise<void>): Promise<void> => {
@@ -101,7 +151,9 @@ export const createActions = (root: HTMLElement) => {
         }
     };
     const inspect = async () => {
-        count = selected.size ? (await request(scope, fields('inspect'))).count || 0 : 0;
+        const response = selected.size ? await request(scope, fields('inspect')) : {count: 0, counts: {}};
+        count = response.count || 0;
+        folderCounts = response.counts || {};
     };
     const changeSelection = (mutate: () => void) => run(async () => {
         const oldSelection = [...selected], oldExclusions = [...excluded];
@@ -145,6 +197,7 @@ export const createActions = (root: HTMLElement) => {
                 more.textContent = element(Selectors.next).textContent;
                 children.append(more);
             }
+            children.dataset.complete = String(!response.next);
             children.dataset.loaded = 'true'; children.hidden = false;
         }
         node.querySelector(Selectors.open)?.setAttribute('aria-expanded', String(!children.hidden));
@@ -152,27 +205,34 @@ export const createActions = (root: HTMLElement) => {
     element<HTMLOptionElement>(Selectors.reference).disabled = Math.floor((options()?.return_types || 0) / 4) % 2 !== 1;
     return {
         load: () => run(list),
-        toggle: (check: HTMLInputElement) => changeSelection(() => {
-            if (check.checked) { selected.add(check.value); excluded.delete(check.value); } else {
-                selected.delete(check.value);
-                if (belongs(check.value, selected)) { excluded.add(check.value); }
-            }
-        }),
+        toggle: (check: HTMLInputElement) => {
+            const checked = check.checked;
+            const branch = new Set([check.value]);
+            return changeSelection(() => {
+                if (checked) {
+                    selected.add(check.value);
+                    excluded.forEach(source => {
+                        if (belongs(source, branch)) { excluded.delete(source); }
+                    });
+                } else {
+                    selected.forEach(source => {
+                        if (belongs(source, branch)) { selected.delete(source); }
+                    });
+                    if (belongs(check.value, selected)) { excluded.add(check.value); }
+                }
+            });
+        },
         clear: () => changeSelection(() => { selected.clear(); excluded.clear(); }),
         selectAll: () => run(async () => {
             const old = [...selected], oldExcluded = [...excluded];
             try {
-                let currentPage = 0, more = true;
-                while (more) {
-                    const response = await request(scope, {action: 'list', path, query, page: currentPage++,
-                        draftid: options()?.itemid || 0});
-                    const fragment = document.createElement('div');
-                    fragment.innerHTML = response.html!;
-                    registerChildren(fragment, path);
-                    fragment.querySelectorAll<HTMLInputElement>(Selectors.check).forEach(check => selected.add(check.value));
-                    if (selected.size > 500 || currentPage > 100) { throw new Error(root.dataset.limit); }
-                    more = !!response.next;
-                }
+                const response = await request(scope, {action: 'selectall', path, query,
+                    draftid: options()?.itemid || 0});
+                (response.sources || []).forEach(source => {
+                    selected.add(source);
+                    parents.set(source, path);
+                });
+                if (selected.size > 500) { throw new Error(root.dataset.limit); }
                 excluded.clear(); await inspect();
             } catch (error) {
                 selected.clear(); excluded.clear();
@@ -197,37 +257,52 @@ export const createActions = (root: HTMLElement) => {
         review: () => run(async () => {
             const response = await request(scope, fields('review'));
             results.innerHTML = response.html!; review = true; approvedFile = response.file; count = response.count || 0;
+            reviewChecks.clear();
+            reviewPaths.clear();
+            folderCounts = response.counts || {};
         }),
-        reviewToggle: (button: HTMLButtonElement) => {
-            const children = button.closest(Selectors.reviewNode)!.querySelector<HTMLElement>(Selectors.reviewChildren)!;
-            children.hidden = !children.hidden;
+        reviewToggle: (button: HTMLElement) => run(async() => {
+            const node = button.closest<HTMLElement>(Selectors.reviewNode)!;
+            const children = node.querySelector<HTMLElement>(Selectors.reviewChildren)!;
+            if (!children.dataset.loaded) {
+                const response = await request(scope, {action: 'reviewchildren', path: node.dataset.path || '/',
+                    aliases: element<HTMLSelectElement>(Selectors.copyMode).value === 'reference' ? 1 : 0});
+                children.innerHTML = response.html || '';
+                children.dataset.loaded = 'true';
+                children.hidden = false;
+            } else {
+                children.hidden = !children.hidden;
+            }
             button.setAttribute('aria-expanded', String(!children.hidden));
-        },
+        }),
+        reviewPage: (button: HTMLElement) => run(async() => {
+            const response = await request(scope, {action: 'reviewchildren', path: button.dataset.path || '/',
+                page: Number(button.dataset.multipickerReviewpage),
+                aliases: element<HTMLSelectElement>(Selectors.copyMode).value === 'reference' ? 1 : 0});
+            button.insertAdjacentHTML('beforebegin', response.html || '');
+            button.remove();
+        }),
         reviewCheck: (check: HTMLInputElement) => {
             if (check.matches(Selectors.reviewGroup)) {
-                check.closest(Selectors.reviewNode)!.querySelectorAll<HTMLInputElement>(Selectors.reviewCheck)
-                    .forEach(child => { child.checked = check.checked; });
+                const path = check.closest<HTMLElement>(Selectors.reviewNode)!.dataset.path || '/';
+                reviewChecks.forEach((_state, key) => {
+                    if ((reviewPaths.get(key) || key.slice(7)).startsWith(path)) { reviewChecks.delete(key); }
+                });
             }
-            root.querySelectorAll<HTMLInputElement>(Selectors.reviewGroup).forEach(group => {
-                const files = [...group.closest(Selectors.reviewNode)!.querySelectorAll<HTMLInputElement>(Selectors.reviewCheck)]
-                    .filter(file => file.value);
-                const checked = files.filter(file => file.checked).length;
-                group.checked = files.length > 0 && checked === files.length;
-                group.indeterminate = checked > 0 && checked < files.length;
-            });
+            reviewChecks.set(check.value, check.checked);
             sync();
         },
-        remove: () => run(async () => {
-            const previous = [...excluded];
-            root.querySelectorAll<HTMLInputElement>(Selectors.reviewCheck + ':checked').forEach(check => {
-                if (check.value) { excluded.add(check.value); }
-            });
-            try {
-                const response = await request(scope, fields('review'));
-                results.innerHTML = response.html!; count = response.count || 0;
-            } catch (error) {
-                excluded.clear(); previous.forEach(source => excluded.add(source)); throw error;
-            }
+        remove: (sources: string[] = []) => run(async() => {
+            const removed = sources.length ? sources : [...reviewChecks].filter(([, value]) => value).map(([key]) => key);
+            const kept = sources.length ? [] : [...reviewChecks].filter(([, value]) => !value).map(([key]) => key);
+            const response = await request(scope, {...fields('review'), removed, kept});
+            results.innerHTML = response.html || '';
+            excluded.clear();
+            (response.excluded || []).forEach(source => excluded.add(source));
+            count = response.count || 0;
+            folderCounts = response.counts || {};
+            reviewChecks.clear();
+            reviewPaths.clear();
         }),
         import: () => run(async () => {
             const response = await request(scope, fields('approve'));

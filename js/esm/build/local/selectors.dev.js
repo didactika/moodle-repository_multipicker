@@ -39,7 +39,9 @@ var selectors_default = {
   reviewGroup: "[data-multipicker-reviewgroup]",
   reviewChildren: "[data-multipicker-reviewchildren]",
   reviewToggle: "[data-multipicker-reviewtoggle]",
-  remove: "[data-multipicker-remove]"
+  remove: "[data-multipicker-remove]",
+  reviewDelete: "[data-multipicker-delete]",
+  reviewPage: "[data-multipicker-reviewpage]"
 };
 export {
   selectors_default as default

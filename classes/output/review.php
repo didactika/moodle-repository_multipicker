@@ -48,38 +48,39 @@ final class review implements \renderable, \templatable {
      * @return array Template context.
      */
     public function export_for_template(\renderer_base $output): array {
-        $tree = [];
-        foreach ($this->operations as $operation) {
-            $branch = &$tree;
-            foreach (array_filter(explode('/', trim($operation['filepath'], '/')), 'strlen') as $folder) {
-                $key = 'folder:' . $folder;
-                $branch[$key] = $branch[$key] ?? ['name' => $folder, 'folder' => true, 'children' => [],
-                    'source' => '', 'standalone' => false];
-                $branch = &$branch[$key]['children'];
-            }
-            $branch['file:' . $operation['filename']] = ['name' => $operation['filename'],
-                'source' => $operation['source'], 'aliases' => $this->aliases, 'folder' => false,
-                'children' => [], 'standalone' => false];
-            unset($branch);
-        }
-        return ['nodes' => $this->nodes($tree), 'count' => count($this->operations),
-            'iconurl' => $output->image_url('f/document')->out(false)];
+        return self::level($this->operations, $this->aliases);
+
     }
 
     /**
-     * Convert associative branches into ordered Mustache child lists.
-     * @param array $branches Destination branches.
-     * @return array Template nodes.
+     * Export only direct children of a reviewed destination, with bounded pages.
+     * @param array $operations Already prepared operations.
+     * @param bool $aliases Native reference mode.
+     * @param string $path Directory prefix, not a source token.
+     * @param int $page Zero-based child page.
+     * @return array One review level.
      */
-    private function nodes(array $branches): array {
-        ksort($branches, SORT_NATURAL | SORT_FLAG_CASE);
+    public static function level(array $operations, bool $aliases, string $path = '/', int $page = 0): array {
         $nodes = [];
-        foreach ($branches as $branch) {
-            if (!empty($branch['folder'])) {
-                $branch['children'] = $this->nodes($branch['children']);
+        foreach ($operations as $operation) {
+            if (strpos($operation['filepath'], $path) !== 0) {
+                continue;
             }
-            $nodes[] = $branch;
+            $remaining = substr($operation['filepath'], strlen($path));
+            if ($remaining !== '') {
+                $name = explode('/', $remaining)[0];
+                $key = 'folder:' . $path . $name . '/';
+                $nodes[$key] = $nodes[$key] ?? ['name' => $name, 'folder' => true, 'source' => $key,
+                    'path' => $path . $name . '/', 'count' => 0];
+                $nodes[$key]['count']++;
+            } else {
+                $nodes[$operation['source']] = ['name' => $operation['filename'], 'folder' => false,
+                    'source' => $operation['source'], 'path' => $path, 'aliases' => $aliases];
+            }
         }
-        return $nodes;
+        uasort($nodes, static fn($a, $b) => ($b['folder'] <=> $a['folder']) ?: strnatcasecmp($a['name'], $b['name']));
+        $page = max(0, $page);
+        return ['nodes' => array_slice(array_values($nodes), $page * 30, 30), 'count' => count($operations),
+            'next' => count($nodes) > ($page + 1) * 30, 'nextpage' => $page + 1, 'path' => $path];
     }
 }

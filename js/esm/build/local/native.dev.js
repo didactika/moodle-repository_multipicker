@@ -13,30 +13,12 @@ const mount = /* @__PURE__ */ __name((root) => {
   const object = window.frameElement;
   const host = object?.closest(".file-picker");
   if (object && host) {
-    object.multipickerPresentationCleanup?.();
-    host.classList.add("multipicker-native-host");
+    parent.require(["repository_multipicker/local/picker_host"], (adapter) => adapter.mount(object));
     const background = parent.getComputedStyle(host).backgroundColor;
     if (background !== "rgba(0, 0, 0, 0)") {
       root.style.setProperty("--multipicker-background", background);
       document.body.style.setProperty("--multipicker-background", background);
     }
-    const observer = new parent.MutationObserver(() => {
-      if (!object.isConnected) {
-        release();
-      }
-    });
-    const release = /* @__PURE__ */ __name(() => {
-      observer.disconnect();
-      host.classList.remove("multipicker-native-host");
-      delete object.multipickerPresentationCleanup;
-    }, "release");
-    object.multipickerPresentationCleanup = release;
-    observer.observe(object.parentElement, { childList: true });
-    window.addEventListener("pagehide", () => {
-      if (!object.isConnected) {
-        release();
-      }
-    }, { once: true });
   }
 }, "mount");
 export {

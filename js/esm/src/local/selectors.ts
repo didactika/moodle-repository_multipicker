@@ -21,5 +21,6 @@ export default {
     reviewNode: '[data-multipicker-reviewnode]', reviewRow: '[data-multipicker-reviewrow]',
     reviewCheck: '[data-multipicker-reviewcheck]', reviewGroup: '[data-multipicker-reviewgroup]',
     reviewChildren: '[data-multipicker-reviewchildren]', reviewToggle: '[data-multipicker-reviewtoggle]',
-    remove: '[data-multipicker-remove]',
+    remove: '[data-multipicker-remove]', reviewDelete: '[data-multipicker-delete]',
+    reviewPage: '[data-multipicker-reviewpage]',
 };

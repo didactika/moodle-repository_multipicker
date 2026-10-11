@@ -54,7 +54,7 @@ class repository_multipicker extends repository_local {
      * @return array Core listing.
      */
     public function get_native_listing(string $path, string $query = '', int $page = 0): array {
-        return $query === '' ? parent::get_listing($path) : parent::search($query, $page);
+        return $query === '' ? parent::get_listing($path) : parent::search($query, $page + 1);
     }
     /**
      * @var string|null Approval currently being downloaded by core.

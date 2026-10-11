@@ -13,6 +13,9 @@ const createActions = /* @__PURE__ */ __name((root) => {
   const selected = /* @__PURE__ */ new Set();
   const excluded = /* @__PURE__ */ new Set();
   const parents = /* @__PURE__ */ new Map();
+  let folderCounts = {};
+  const reviewChecks = /* @__PURE__ */ new Map();
+  const reviewPaths = /* @__PURE__ */ new Map();
   const scope = root.dataset.scope;
   const element = /* @__PURE__ */ __name((selector) => root.querySelector(selector), "element");
   const results = element(Selectors.results);
@@ -29,11 +32,53 @@ const createActions = /* @__PURE__ */ __name((root) => {
     }
     return false;
   }, "belongs");
+  const isSelected = /* @__PURE__ */ __name((source) => {
+    for (let depth = 0; source && depth < 100; depth++) {
+      if (excluded.has(source)) {
+        return false;
+      }
+      if (selected.has(source)) {
+        return true;
+      }
+      source = parents.get(source) || "";
+    }
+    return false;
+  }, "isSelected");
+  const reviewedState = /* @__PURE__ */ __name((check) => {
+    if (reviewChecks.has(check.value)) {
+      return reviewChecks.get(check.value);
+    }
+    const path2 = check.closest(Selectors.reviewNode).dataset.path || "/";
+    let state = false, length = -1;
+    reviewChecks.forEach((selected2, key) => {
+      if (key.startsWith("folder:") && path2.startsWith(key.slice(7)) && key.length > length) {
+        state = selected2;
+        length = key.length;
+      }
+    });
+    return state;
+  }, "reviewedState");
   const sync = /* @__PURE__ */ __name(() => {
     root.querySelectorAll(Selectors.check).forEach((check) => {
-      check.checked = belongs(check.value, selected) && !belongs(check.value, excluded);
+      check.checked = isSelected(check.value);
+      check.indeterminate = false;
       check.disabled = busy;
       check.closest(Selectors.card).classList.toggle("border-primary", check.checked);
+    });
+    [...root.querySelectorAll(Selectors.node)].reverse().forEach((node) => {
+      const children = node.querySelector(Selectors.children);
+      const check = node.querySelector(Selectors.check);
+      if (!children || !check) {
+        return;
+      }
+      const files = [...children.querySelectorAll(Selectors.check)];
+      const any = files.some((file) => file.checked || file.indeterminate);
+      const all = files.length > 0 && files.every((file) => file.checked && !file.indeterminate);
+      check.indeterminate = children.dataset.complete === "true" ? any && !all : !check.checked && (folderCounts[check.value] || 0) > 0;
+      if (children.dataset.complete === "true") {
+        check.checked = all;
+      }
+      check.closest(Selectors.card).classList.toggle("border-primary", check.checked || check.indeterminate);
     });
     element(Selectors.count).textContent = String(count);
     element(Selectors.review).disabled = !count || busy;
@@ -47,10 +92,24 @@ const createActions = /* @__PURE__ */ __name((root) => {
     element(Selectors.pagination).classList.toggle("d-flex", !review);
     element(Selectors.back).hidden = !review && !parent;
     element(Selectors.clearSearch).disabled = !query;
-    element(Selectors.remove).hidden = !review || !root.querySelector(Selectors.reviewCheck + ":checked");
+    element(Selectors.remove).hidden = !review || ![...reviewChecks.values()].some(Boolean);
     element(Selectors.remove).disabled = busy;
-    root.querySelectorAll(".multipicker-meta").forEach((metadata) => {
-      ["border-top", "pt-2", "mt-2"].forEach((style) => metadata.classList.toggle(style, root.dataset.layout === "cards"));
+    root.querySelectorAll(Selectors.reviewCheck).forEach((check) => {
+      const path2 = check.closest(Selectors.reviewNode).dataset.path || "/";
+      reviewPaths.set(check.value, path2);
+      check.checked = !!reviewedState(check);
+      check.indeterminate = false;
+      if (check.matches(Selectors.reviewGroup)) {
+        reviewChecks.forEach((state, key) => {
+          if (key !== check.value && (reviewPaths.get(key) || key.slice(7)).startsWith(path2) && state !== check.checked) {
+            check.indeterminate = true;
+          }
+        });
+      }
+    });
+    root.querySelectorAll("[data-multipicker-folder-count]").forEach((badge) => {
+      const total = folderCounts[badge.dataset.multipickerFolderCount] || 0;
+      badge.textContent = root.dataset.folderselection.replace("{$a}", String(total));
     });
   }, "sync");
   const fields = /* @__PURE__ */ __name((action) => {
@@ -85,6 +144,7 @@ const createActions = /* @__PURE__ */ __name((root) => {
     element(Selectors.previous).hidden = !response.previous;
     element(Selectors.next).hidden = !response.next;
     element(Selectors.location).textContent = response.location || "";
+    element(Selectors.location).title = response.location || "";
     review = false;
   }, "list");
   const run = /* @__PURE__ */ __name(async (operation) => {
@@ -111,7 +171,9 @@ const createActions = /* @__PURE__ */ __name((root) => {
     }
   }, "run");
   const inspect = /* @__PURE__ */ __name(async () => {
-    count = selected.size ? (await request(scope, fields("inspect"))).count || 0 : 0;
+    const response = selected.size ? await request(scope, fields("inspect")) : { count: 0, counts: {} };
+    count = response.count || 0;
+    folderCounts = response.counts || {};
   }, "inspect");
   const changeSelection = /* @__PURE__ */ __name((mutate) => run(async () => {
     const oldSelection = [...selected], oldExclusions = [...excluded];
@@ -169,6 +231,7 @@ const createActions = /* @__PURE__ */ __name((root) => {
         more.textContent = element(Selectors.next).textContent;
         children.append(more);
       }
+      children.dataset.complete = String(!response.next);
       children.dataset.loaded = "true";
       children.hidden = false;
     }
@@ -177,17 +240,29 @@ const createActions = /* @__PURE__ */ __name((root) => {
   element(Selectors.reference).disabled = Math.floor((options()?.return_types || 0) / 4) % 2 !== 1;
   return {
     load: /* @__PURE__ */ __name(() => run(list), "load"),
-    toggle: /* @__PURE__ */ __name((check) => changeSelection(() => {
-      if (check.checked) {
-        selected.add(check.value);
-        excluded.delete(check.value);
-      } else {
-        selected.delete(check.value);
-        if (belongs(check.value, selected)) {
-          excluded.add(check.value);
+    toggle: /* @__PURE__ */ __name((check) => {
+      const checked = check.checked;
+      const branch = /* @__PURE__ */ new Set([check.value]);
+      return changeSelection(() => {
+        if (checked) {
+          selected.add(check.value);
+          excluded.forEach((source) => {
+            if (belongs(source, branch)) {
+              excluded.delete(source);
+            }
+          });
+        } else {
+          selected.forEach((source) => {
+            if (belongs(source, branch)) {
+              selected.delete(source);
+            }
+          });
+          if (belongs(check.value, selected)) {
+            excluded.add(check.value);
+          }
         }
-      }
-    }), "toggle"),
+      });
+    }, "toggle"),
     clear: /* @__PURE__ */ __name(() => changeSelection(() => {
       selected.clear();
       excluded.clear();
@@ -195,23 +270,18 @@ const createActions = /* @__PURE__ */ __name((root) => {
     selectAll: /* @__PURE__ */ __name(() => run(async () => {
       const old = [...selected], oldExcluded = [...excluded];
       try {
-        let currentPage = 0, more = true;
-        while (more) {
-          const response = await request(scope, {
-            action: "list",
-            path,
-            query,
-            page: currentPage++,
-            draftid: options()?.itemid || 0
-          });
-          const fragment = document.createElement("div");
-          fragment.innerHTML = response.html;
-          registerChildren(fragment, path);
-          fragment.querySelectorAll(Selectors.check).forEach((check) => selected.add(check.value));
-          if (selected.size > 500 || currentPage > 100) {
-            throw new Error(root.dataset.limit);
-          }
-          more = !!response.next;
+        const response = await request(scope, {
+          action: "selectall",
+          path,
+          query,
+          draftid: options()?.itemid || 0
+        });
+        (response.sources || []).forEach((source) => {
+          selected.add(source);
+          parents.set(source, path);
+        });
+        if (selected.size > 500) {
+          throw new Error(root.dataset.limit);
         }
         excluded.clear();
         await inspect();
@@ -257,42 +327,60 @@ const createActions = /* @__PURE__ */ __name((root) => {
       review = true;
       approvedFile = response.file;
       count = response.count || 0;
+      reviewChecks.clear();
+      reviewPaths.clear();
+      folderCounts = response.counts || {};
     }), "review"),
-    reviewToggle: /* @__PURE__ */ __name((button) => {
-      const children = button.closest(Selectors.reviewNode).querySelector(Selectors.reviewChildren);
-      children.hidden = !children.hidden;
+    reviewToggle: /* @__PURE__ */ __name((button) => run(async () => {
+      const node = button.closest(Selectors.reviewNode);
+      const children = node.querySelector(Selectors.reviewChildren);
+      if (!children.dataset.loaded) {
+        const response = await request(scope, {
+          action: "reviewchildren",
+          path: node.dataset.path || "/",
+          aliases: element(Selectors.copyMode).value === "reference" ? 1 : 0
+        });
+        children.innerHTML = response.html || "";
+        children.dataset.loaded = "true";
+        children.hidden = false;
+      } else {
+        children.hidden = !children.hidden;
+      }
       button.setAttribute("aria-expanded", String(!children.hidden));
-    }, "reviewToggle"),
+    }), "reviewToggle"),
+    reviewPage: /* @__PURE__ */ __name((button) => run(async () => {
+      const response = await request(scope, {
+        action: "reviewchildren",
+        path: button.dataset.path || "/",
+        page: Number(button.dataset.multipickerReviewpage),
+        aliases: element(Selectors.copyMode).value === "reference" ? 1 : 0
+      });
+      button.insertAdjacentHTML("beforebegin", response.html || "");
+      button.remove();
+    }), "reviewPage"),
     reviewCheck: /* @__PURE__ */ __name((check) => {
       if (check.matches(Selectors.reviewGroup)) {
-        check.closest(Selectors.reviewNode).querySelectorAll(Selectors.reviewCheck).forEach((child) => {
-          child.checked = check.checked;
+        const path2 = check.closest(Selectors.reviewNode).dataset.path || "/";
+        reviewChecks.forEach((_state, key) => {
+          if ((reviewPaths.get(key) || key.slice(7)).startsWith(path2)) {
+            reviewChecks.delete(key);
+          }
         });
       }
-      root.querySelectorAll(Selectors.reviewGroup).forEach((group) => {
-        const files = [...group.closest(Selectors.reviewNode).querySelectorAll(Selectors.reviewCheck)].filter((file) => file.value);
-        const checked = files.filter((file) => file.checked).length;
-        group.checked = files.length > 0 && checked === files.length;
-        group.indeterminate = checked > 0 && checked < files.length;
-      });
+      reviewChecks.set(check.value, check.checked);
       sync();
     }, "reviewCheck"),
-    remove: /* @__PURE__ */ __name(() => run(async () => {
-      const previous = [...excluded];
-      root.querySelectorAll(Selectors.reviewCheck + ":checked").forEach((check) => {
-        if (check.value) {
-          excluded.add(check.value);
-        }
-      });
-      try {
-        const response = await request(scope, fields("review"));
-        results.innerHTML = response.html;
-        count = response.count || 0;
-      } catch (error) {
-        excluded.clear();
-        previous.forEach((source) => excluded.add(source));
-        throw error;
-      }
+    remove: /* @__PURE__ */ __name((sources = []) => run(async () => {
+      const removed = sources.length ? sources : [...reviewChecks].filter(([, value]) => value).map(([key]) => key);
+      const kept = sources.length ? [] : [...reviewChecks].filter(([, value]) => !value).map(([key]) => key);
+      const response = await request(scope, { ...fields("review"), removed, kept });
+      results.innerHTML = response.html || "";
+      excluded.clear();
+      (response.excluded || []).forEach((source) => excluded.add(source));
+      count = response.count || 0;
+      folderCounts = response.counts || {};
+      reviewChecks.clear();
+      reviewPaths.clear();
     }), "remove"),
     import: /* @__PURE__ */ __name(() => run(async () => {
       const response = await request(scope, fields("approve"));

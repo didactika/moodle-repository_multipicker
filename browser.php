@@ -40,7 +40,35 @@ if (optional_param('ajax', 0, PARAM_BOOL)) {
     $renderer = $PAGE->get_renderer('core');
     try {
         $action = required_param('action', PARAM_ALPHA);
-        if ($action === 'list') {
+        if ($action === 'selectall') {
+            $path = optional_param('path', '', PARAM_RAW);
+            $query = optional_param('query', '', PARAM_TEXT);
+            $repository = repository::get_repository_by_id($scope['repositoryid'], $scope['contextid']);
+            $sources = [];
+            for ($page = 0; $page < 100; $page++) {
+                $listing = $repository->get_native_listing($path, $query, $page);
+                foreach ($listing['list'] as $node) {
+                    $sources[] = $node['path'] ?? $node['source'];
+                }
+                if (count($sources) > 500) {
+                    throw new moodle_exception('limit', 'repository_multipicker');
+                }
+                if ($query === '' || empty($listing['pages'])) {
+                    break;
+                }
+            }
+            echo json_encode(['sources' => array_values(array_unique($sources))]);
+        } else if ($action === 'reviewchildren') {
+            $snapshot = $SESSION->repository_multipicker[$token]['preview'] ?? null;
+            if (!$snapshot) {
+                throw new moodle_exception('unavailable', 'repository_multipicker');
+            }
+            $data = \repository_multipicker\output\review::level(
+                $snapshot['operations'], optional_param('aliases', false, PARAM_BOOL),
+                optional_param('path', '/', PARAM_PATH), optional_param('page', 0, PARAM_INT)
+            );
+            echo json_encode(['html' => $renderer->render_from_template('repository_multipicker/browser/review', $data)]);
+        } else if ($action === 'list') {
             $listing = \repository_multipicker\local\browser::listing(
                 $scope,
                 optional_param('path', '', PARAM_RAW),
@@ -60,16 +88,20 @@ if (optional_param('ajax', 0, PARAM_BOOL)) {
             if (!in_array($copymode, ['copy', 'reference'], true)) {
                 throw new moodle_exception('unavailable', 'repository_multipicker');
             }
-            $operations = \repository_multipicker\local\browser::review(
-                $scope,
-                $sources,
-                $maxfiles,
-                $basepath,
-                $preservefolders,
-                $excluded
-            );
+            $options = compact('sources', 'maxfiles', 'basepath', 'preservefolders', 'excluded');
+            $snapshot = \repository_multipicker\local\preview::prepare($token, $scope, $options, $action === 'approve');
+            $removed = optional_param_array('removed', [], PARAM_RAW);
+            if ($removed) {
+                $kept = optional_param_array('kept', [], PARAM_RAW);
+                $excluded = array_values(array_unique(array_merge($excluded,
+                    \repository_multipicker\local\preview::exclusions($snapshot['operations'], $removed, $kept))));
+                $options['excluded'] = $excluded;
+                $snapshot = \repository_multipicker\local\preview::prepare($token, $scope, $options);
+            }
+            $operations = $snapshot['operations'];
+            $counts = $snapshot['counts'];
             if ($action === 'inspect') {
-                echo json_encode(['count' => count($operations)]);
+                echo json_encode(['count' => count($operations), 'counts' => $counts]);
                 exit;
             }
             if (!$operations && $action === 'approve') {
@@ -87,11 +119,13 @@ if (optional_param('ajax', 0, PARAM_BOOL)) {
                 $SESSION->repository_multipicker[$token]['approvalnonce'] = bin2hex(random_bytes(16));
             }
             $source = 'batch:' . $token . ':' . ($SESSION->repository_multipicker[$token]['approvalnonce'] ?? '');
-            echo json_encode(['html' => $renderer->render_from_template(
+            echo json_encode(['html' => $action === 'approve' ? '' : $renderer->render_from_template(
                 'repository_multipicker/browser/review',
-                (new \repository_multipicker\output\review($operations, $copymode === 'reference'))->export_for_template($renderer)
+                \repository_multipicker\output\review::level($operations, $copymode === 'reference')
             ),
+                'excluded' => $excluded,
                 'count' => count($operations),
+                'counts' => $counts,
                 'file' => $action === 'approve' ? ['title' => $operations[0]['filename'], 'source' => $source,
                     'sourcekey' => sha1($source . repository::get_secret_key() . sesskey()),
                     'repository_id' => $scope['repositoryid'],

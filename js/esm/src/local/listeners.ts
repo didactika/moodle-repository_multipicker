@@ -41,7 +41,13 @@ export const register = (root: HTMLElement, actions: ReturnType<typeof createAct
         const layout = target.closest<HTMLButtonElement>(Selectors.layout);
         const more = target.closest<HTMLButtonElement>(Selectors.treePage);
         const reviewToggle = target.closest<HTMLButtonElement>(Selectors.reviewToggle);
-        if (reviewToggle) { actions.reviewToggle(reviewToggle); }
+        const reviewDelete = target.closest<HTMLElement>(Selectors.reviewDelete);
+        const reviewPage = target.closest<HTMLElement>(Selectors.reviewPage);
+        if (reviewDelete) {
+            actions.remove([reviewDelete.dataset.multipickerDelete!]);
+        } else if (reviewPage) {
+            actions.reviewPage(reviewPage);
+        } else if (reviewToggle) { actions.reviewToggle(reviewToggle); }
         else if (open) { actions.open(open); }
         else if (more) { actions.treePage(more); }
         else if (layout) { actions.layout(layout.dataset.multipickerLayout!); }

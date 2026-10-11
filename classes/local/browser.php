@@ -106,7 +106,7 @@ class browser {
             $parent = array_pop($ancestors);
             return ['cards' => $cards, 'path' => $path, 'page' => max(0, $page),
                 'previous' => $page > 0, 'next' => $search ? !empty($listing['pages']) : count($nodes) > ($page + 1) * 30,
-                'parent' => $parent['path'] ?? '', 'location' => $current['name'] ?? ''];
+                'parent' => $parent['path'] ?? '', 'location' => implode(' / ', array_column($listing['path'] ?? [], 'name'))];
         }
         $context = \context::instance_by_id($scope['contextid']);
         $coursecontext = $context->get_course_context(false);
@@ -129,7 +129,7 @@ class browser {
         return ['cards' => $cards, 'path' => $path, 'page' => max(0, $page),
             'previous' => $page > 0, 'next' => count($children) > ($page + 1) * 30,
             'parent' => $parent ? base64_encode(json_encode($parent->get_params())) : '',
-            'location' => $node->get_visible_name()];
+            'location' => $node->get_readable_fullname()];
     }
 
     /**
@@ -140,6 +140,7 @@ class browser {
      * @param string $basepath Native destination directory.
      * @param bool $preservefolders Preserve selected source folder paths.
      * @param array $excluded Source nodes removed from a recursive selection.
+     * @param array $counts Recursive selected-file totals keyed by encoded directory.
      * @return array Resulting file operations.
      */
     public static function review(
@@ -148,7 +149,8 @@ class browser {
         int $maxfiles,
         string $basepath,
         bool $preservefolders = true,
-        array $excluded = []
+        array $excluded = [],
+        array &$counts = []
     ): array {
         global $USER;
         if (!$sources || count($sources) > 500 || !$scope['draftid']) {
@@ -156,6 +158,7 @@ class browser {
         }
         $basepath = '/' . trim(clean_param($basepath, PARAM_PATH), '/') . '/';
         $basepath = $basepath === '//' ? '/' : $basepath;
+        $counts = [];
         $pending = [];
         $omitted = [];
         if (count($excluded) > 5000) {
@@ -166,7 +169,9 @@ class browser {
         }
         foreach (array_unique($sources) as $encoded) {
             $node = self::source($encoded);
-            $pending[] = [$node, $node->is_directory() ? clean_param($node->get_visible_name(), PARAM_FILE) . '/' : ''];
+            $pending[] = [$node, $node->is_directory() ? clean_param($node->get_visible_name(), PARAM_FILE) . '/'
+                : ltrim($node->get_params()['filepath'] ?? '/', '/'),
+                self::ancestors($node)];
         }
         $fs = get_file_storage();
         $context = \context_user::instance($USER->id);
@@ -185,7 +190,7 @@ class browser {
             if (++$steps > 10000) {
                 throw new \moodle_exception('limit', 'repository_multipicker');
             }
-            [$node, $relative] = array_pop($pending);
+            [$node, $relative, $ancestors] = array_pop($pending);
             $identity = json_encode($node->get_params());
             if (isset($visited[$identity]) || isset($omitted[$identity])) {
                 continue;
@@ -197,7 +202,9 @@ class browser {
                         continue;
                     }
                     $pending[] = [$child, $relative . ($child->is_directory()
-                        ? clean_param($child->get_visible_name(), PARAM_FILE) . '/' : '')];
+                        ? clean_param($child->get_visible_name(), PARAM_FILE) . '/' : ''),
+                        $child->is_directory() ? array_merge($ancestors, [base64_encode(json_encode($child->get_params()))])
+                            : $ancestors];
                 }
                 continue;
             }
@@ -218,7 +225,7 @@ class browser {
             if (!in_array('*', $types, true) && !file_extension_in_typegroup($file->get_filename(), $types)) {
                 throw new \moodle_exception('limit', 'repository_multipicker');
             }
-            $filepath = $basepath . ($preservefolders ? $relative : '');
+            $filepath = destination_path::make($basepath, $preservefolders ? $relative : '');
             $key = $filepath . $file->get_filename();
             if (isset($paths[$key])) {
                 if ($paths[$key] === $file->get_contenthash()) {
@@ -235,11 +242,33 @@ class browser {
             ) {
                 throw new \moodle_exception('limit', 'repository_multipicker');
             }
+            foreach ($ancestors as $ancestor) {
+                $counts[$ancestor] = ($counts[$ancestor] ?? 0) + 1;
+            }
             $paths[$key] = $file->get_contenthash();
             $operations[] = ['source' => base64_encode(json_encode($params)), 'filepath' => $filepath,
                 'filename' => $file->get_filename(), 'hash' => $file->get_contenthash()];
         }
         return $operations;
+    }
+
+    /**
+     * Count overlapping selections against the actual source hierarchy, independent of selection order.
+     * @param \file_info $node Authorized source.
+     * @return array Encoded parent directories, including a directory source itself.
+     */
+    private static function ancestors(\file_info $node): array {
+        $directories = [];
+        $parent = $node->is_directory() ? $node : $node->get_parent();
+        while ($parent && count($directories) < 100) {
+            $key = base64_encode(json_encode($parent->get_params()));
+            if (isset($directories[$key])) {
+                break;
+            }
+            $directories[$key] = $key;
+            $parent = $parent->get_parent();
+        }
+        return array_values($directories);
     }
 
     /**
