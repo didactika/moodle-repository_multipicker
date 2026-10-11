@@ -1,6 +1,5 @@
 // This file is part of Moodle - https://moodle.org/
 // Moodle is free software under the GNU GPL v3 or later.
-
 /**
  * Chooser initialization.
  * @module repository_multipicker/local/controller
@@ -11,14 +10,15 @@
 import Selectors from 'repository_multipicker/local/selectors';
 import {createActions} from 'repository_multipicker/local/actions';
 import {register} from 'repository_multipicker/local/listeners';
-
+import {mount} from 'repository_multipicker/local/native';
 /** @param {string} scope Session scope. */
-export const init = scope => {
+export const init = (scope) => {
     const root = document.querySelector(Selectors.root);
     if (!root || root.dataset.scope !== scope || root.dataset.ready) {
         return;
     }
     root.dataset.ready = 'true';
+    mount(root);
     const actions = createActions(root);
     register(root, actions);
     actions.load();

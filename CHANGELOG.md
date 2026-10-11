@@ -1,6 +1,9 @@
 # Changelog
 
-## [4.0.0-beta] - 2026-10-11
+## [4.0.0] - 2026-10-11
 
-- Independent Server files multiple-selection repository with recursive folders, paginated navigation, reviewed native draft imports and no local dependency.
-- Session-bound approvals, source revalidation, native limits, metadata preservation and conflict preflight.
+- Initial public Server files MultiPicker distribution for Moodle 4.0–5.2.
+- Native Server files navigation and search with cards, list and lazy tree views.
+- Shared recursive selection, native limits, folder preservation and copy or alias imports.
+- Reusable browsing scopes with one-time approval identifiers and atomic draft copies.
+- Fixed translated repository name and the provided plugin icon.

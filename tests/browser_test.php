@@ -83,8 +83,10 @@ final class browser_test extends \advanced_testcase {
             $this->assertSame('cc', $file->get_license());
             $this->assertStringContainsString('/nested/', $file->get_filepath());
         }
+        $this->assertArrayNotHasKey('approval', browser::scope('test'));
+        $this->assertNotEmpty(browser::listing(browser::scope('test'), $source, 0)['cards']);
         $this->expectException(\moodle_exception::class);
-        browser::scope('test');
+        browser::apply('test', ['itemid' => $scope['draftid']], -1, -1);
     }
 
     /**
@@ -140,5 +142,89 @@ final class browser_test extends \advanced_testcase {
         $this->setUser($this->getDataGenerator()->create_user());
         $this->expectException(\moodle_exception::class);
         browser::scope('test');
+    }
+
+    /**
+     * Course teachers can browse without a site-wide repository role.
+     */
+    public function test_course_teacher_scope_uses_native_context_permissions(): void {
+        global $SESSION;
+        [$scope, $source] = $this->fixture();
+        $context = \context::instance_by_id($scope['contextid']);
+        $teacher = $this->getDataGenerator()->create_user();
+        $this->getDataGenerator()->enrol_user($teacher->id, $context->get_course_context()->instanceid, 'editingteacher');
+        $this->setUser($teacher);
+        $scope['userid'] = $teacher->id;
+        $SESSION->repository_multipicker['test'] = $scope;
+        $this->assertFalse(has_capability('repository/multipicker:view', \context_system::instance()));
+        $this->assertSame($teacher->id, browser::scope('test')['userid']);
+        $this->assertNotEmpty(browser::listing($scope, $source, 0)['cards']);
+        $this->assertCount(2, browser::review($scope, [$source], 2, '/'));
+    }
+
+    /**
+     * Native folder structure and recursive exclusions are independent choices.
+     */
+    public function test_flat_import_and_recursive_exclusions(): void {
+        [$scope, $source] = $this->fixture();
+        $all = browser::review($scope, [$source], 2, '/', false);
+        $this->assertCount(2, $all);
+        foreach ($all as $file) {
+            $this->assertSame('/', $file['filepath']);
+        }
+        $remaining = browser::review($scope, [$source], 1, '/', false, [$all[0]['source']]);
+        $this->assertCount(1, $remaining);
+        $this->assertSame($all[1]['source'], $remaining[0]['source']);
+    }
+
+    /**
+     * An initialized native draft binds an otherwise valid new browsing scope.
+     */
+    public function test_new_scope_can_bind_its_native_draft(): void {
+        global $SESSION;
+        [$scope] = $this->fixture();
+        $SESSION->repository_multipicker['test']['draftid'] = 0;
+        $this->assertSame(0, browser::scope('test')['draftid']);
+        $this->assertSame($scope['draftid'], browser::scope('test', $scope['draftid'])['draftid']);
+        $this->assertSame($scope['draftid'], browser::scope('test', $scope['draftid'] + 1)['draftid']);
+    }
+
+    /**
+     * Alias imports keep the native packed source reference and original metadata.
+     */
+    public function test_alias_import_uses_the_native_repository_reference(): void {
+        global $CFG, $DB, $SESSION, $USER;
+        [$scope, $source] = $this->fixture();
+        require_once($CFG->dirroot . '/repository/lib.php');
+        if (!$DB->record_exists('repository', ['type' => 'multipicker'])) {
+            (new \repository_type('multipicker'))->create(false);
+        }
+        $typeid = $DB->get_field('repository', 'id', ['type' => 'multipicker']);
+        $scope['repositoryid'] = (int)$DB->get_field('repository_instances', 'id', ['typeid' => $typeid], MUST_EXIST);
+        $scope += ['approval' => browser::review($scope, [$source], 2, '/'), 'sources' => [$source],
+            'maxfiles' => 2, 'basepath' => '/', 'copymode' => 'reference', 'approvalnonce' => 'current'];
+        $SESSION->repository_multipicker['test'] = $scope;
+        $repository = \repository::get_repository_by_id($scope['repositoryid'], \context::instance_by_id($scope['contextid']));
+        $this->assertTrue($repository->has_moodle_files());
+        $this->assertFalse($repository->file_is_accessible('batch:test:expired'));
+        $this->assertTrue($repository->file_is_accessible('batch:test:current'));
+        $this->assertTrue($repository->has_moodle_files());
+        $this->assertFalse(\repository::get_moodle_file($repository->get_file_reference('batch:test:current')));
+        browser::apply('test', ['itemid' => $scope['draftid']], -1, -1);
+        $draft = get_file_storage()->get_area_files(
+            \context_user::instance($USER->id)->id,
+            'user',
+            'draft',
+            $scope['draftid'],
+            'id',
+            false
+        );
+        $this->assertCount(2, $draft);
+        foreach ($draft as $file) {
+            $this->assertTrue($file->is_external_file());
+            $this->assertSame('Source author', $file->get_author());
+            $this->assertSame('cc', $file->get_license());
+            $this->assertSame($scope['repositoryid'], (int)$file->get_repository_id());
+        }
     }
 }

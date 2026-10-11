@@ -71,13 +71,13 @@ class behat_repository_multipicker extends behat_base {
         if (
             !$this->getSession()->wait(
                 10000,
-                '[...document.querySelectorAll(".fp-repo-name")].some(node=>node.textContent.trim()==="MultiPicker")'
+                '[...document.querySelectorAll(".fp-repo-name")].some(node=>node.textContent.trim()==="Server files MultiPicker")'
             )
         ) {
             throw new Exception('The native repository entry is unavailable.');
         }
         $this->getSession()->getDriver()->executeScript(
-            '[...document.querySelectorAll(".fp-repo-name")].find(node=>node.textContent.trim()==="MultiPicker")'
+            '[...document.querySelectorAll(".fp-repo-name")].find(node=>node.textContent.trim()==="Server files MultiPicker")'
                 . '.closest("a").click();'
         );
         if (
@@ -86,7 +86,18 @@ class behat_repository_multipicker extends behat_base {
                 '!!document.querySelector(".fp-object-container")?.contentDocument?.querySelector("[data-multipicker-card]")'
             )
         ) {
-            throw new Exception('The standalone chooser did not load.');
+            $this->getSession()->getDriver()->executeScript(
+                'window.standaloneFailure="";const frame=document.querySelector(".fp-object-container"),'
+                    . 'doc=frame.contentDocument,root=doc.querySelector("[data-multipicker-root]");'
+                    . 'fetch(doc.defaultView.location.href,{method:"POST",body:new URLSearchParams({ajax:1,action:"list",'
+                    . 'sesskey:root.dataset.sesskey,scope:root.dataset.scope})})'
+                    . '.then(response=>response.text()).then(text=>window.standaloneFailure=text);'
+            );
+            $this->getSession()->wait(3000, 'window.standaloneFailure!==""');
+            $detail = $this->getSession()->getDriver()->evaluateScript(
+                'window.standaloneFailure'
+            );
+            throw new Exception('The standalone chooser did not load: ' . $detail);
         }
     }
 
@@ -96,25 +107,33 @@ class behat_repository_multipicker extends behat_base {
      * @When /^I select the standalone source directory contents$/
      */
     public function select_source(): void {
-        global $DB;
-        $folder = $DB->get_record('folder', ['name' => 'Source files'], '*', MUST_EXIST);
-        $cm = get_coursemodule_from_instance('folder', $folder->id);
-        $path = base64_encode(json_encode([
-            'contextid' => context_module::instance($cm->id)->id, 'component' => 'mod_folder',
-            'filearea' => 'content', 'itemid' => 0, 'filepath' => '/', 'filename' => '.',
-        ]));
         $this->getSession()->getDriver()->executeScript(
-            'window.standaloneLoaded=false;const frame=document.querySelector(".fp-object-container"),'
-                . 'doc=frame.contentDocument,root=doc.querySelector("[data-multipicker-root]");'
-                . 'fetch(frame.src,{method:"POST",body:new URLSearchParams({ajax:1,action:"list",'
-                . 'sesskey:root.dataset.sesskey,path:' . json_encode($path) . '})})'
-                . '.then(response=>response.json()).then(result=>{'
-                . 'if(result.error){throw new Error(result.error);}'
-                . 'doc.querySelector("[data-multipicker-results]").innerHTML=result.html;'
-                . 'doc.querySelector("[data-multipicker-selectall]").click();window.standaloneLoaded=true;});'
+            'const doc=document.querySelector(".fp-object-container").contentDocument;'
+                . '[...doc.querySelectorAll("[data-multipicker-card]")].find(node=>'
+                . 'node.querySelector(".multipicker-name").textContent.trim().startsWith("Source files"))'
+                . '.querySelector("[data-multipicker-open]").click();'
         );
-        if (!$this->getSession()->wait(10000, 'window.standaloneLoaded===true')) {
-            throw new Exception('The authorized source directory did not load.');
+        if (
+            !$this->getSession()->wait(
+                10000,
+                '[...document.querySelector(".fp-object-container").contentDocument.querySelectorAll(".multipicker-name")]'
+                . '.some(node=>node.textContent.trim()==="first.txt")'
+            )
+        ) {
+            throw new Exception('The native Server files source directory did not load.');
+        }
+        $this->getSession()->getDriver()->executeScript(
+            'document.querySelector(".fp-object-container").contentDocument'
+                . '.querySelector("[data-multipicker-selectall]").click();'
+        );
+        if (
+            !$this->getSession()->wait(
+                10000,
+                'document.querySelector(".fp-object-container").contentDocument'
+                . '.querySelector("[data-multipicker-count]").textContent==="2"'
+            )
+        ) {
+            throw new Exception('The recursive native selection did not complete.');
         }
     }
 
@@ -136,7 +155,197 @@ class behat_repository_multipicker extends behat_base {
             : '!document.querySelector(".moodle-dialogue.filepicker .moodle-dialogue-content")'
                 . '||document.querySelector(".filemanager").textContent.includes("first.txt")';
         if (!$this->getSession()->wait(15000, $condition)) {
-            throw new Exception('The native chooser action did not complete: ' . $action);
+            $visible = $this->getSession()->getDriver()->evaluateScript(
+                'JSON.stringify({chooser:document.querySelector(".fp-object-container")?.contentDocument?.body.innerText,'
+                . 'native:document.querySelector(".file-picker")?.innerText})'
+            );
+            throw new Exception('The native chooser action did not complete: ' . $action . ' / ' . $visible);
+        }
+        if ($action === 'review') {
+            $visible = $this->getSession()->getDriver()->evaluateScript(
+                'document.querySelector(".fp-object-container").contentDocument'
+                    . '.querySelector("[data-multipicker-selection-actions]").getClientRects().length'
+            );
+            if ($visible) {
+                throw new Exception('Browsing layout controls must be hidden during review.');
+            }
+        }
+    }
+
+    /**
+     * Layout controls share real selected nodes, including lazily opened children.
+     * @Then /^standalone selection remains consistent across all views$/
+     */
+    public function selection_views(): void {
+        foreach (['list', 'tree', 'cards'] as $view) {
+            $this->getSession()->getDriver()->executeScript(
+                'const doc=document.querySelector(".fp-object-container").contentDocument;'
+                    . 'doc.querySelector(' . json_encode('[data-multipicker-layout="' . $view . '"]') . ').click();'
+            );
+            if ($view === 'tree') {
+                $this->getSession()->getDriver()->executeScript(
+                    'const doc=document.querySelector(".fp-object-container").contentDocument;'
+                        . '[...doc.querySelectorAll("[data-multipicker-card]")].find(node=>'
+                        . 'node.querySelector(".multipicker-name").textContent.trim()==="nested")'
+                        . '.querySelector("[data-multipicker-open]").click();'
+                );
+                if (
+                    !$this->getSession()->wait(
+                        10000,
+                        '[...document.querySelector(".fp-object-container").contentDocument.querySelectorAll(".multipicker-name")]'
+                        . '.some(node=>node.textContent.trim()==="second.txt")'
+                    )
+                ) {
+                    throw new Exception('Lazy tree did not reach the actual file.');
+                }
+            }
+            $valid = $this->getSession()->getDriver()->evaluateScript(
+                '(()=>{const doc=document.querySelector(".fp-object-container").contentDocument;'
+                    . 'return doc.querySelector("[data-multipicker-count]").textContent==="2"'
+                    . '&&[...doc.querySelectorAll("[data-multipicker-check]")].every(check=>check.checked)'
+                    . '&&doc.querySelectorAll("[data-multipicker-layout].active").length===1'
+                    . '&&doc.querySelector("[data-multipicker-layout].active").dataset.multipickerLayout==='
+                    . json_encode($view) . ';})()'
+            );
+            if (!$valid) {
+                throw new Exception('Selection differs in ' . $view . ' layout.');
+            }
+        }
+    }
+
+    /**
+     * Reopening the cached native chooser must not reuse a consumed approval.
+     * @Then /^the reopened standalone browser is ready$/
+     */
+    public function reopened_browser(): void {
+        $valid = $this->getSession()->getDriver()->evaluateScript(
+            '(()=>{const doc=document.querySelector(".fp-object-container").contentDocument;'
+                . 'return doc.querySelector("[data-multipicker-error]").hidden'
+                . '&&!!doc.querySelector("[data-multipicker-card]");})()'
+        );
+        if (!$valid) {
+            throw new Exception('A consumed import invalidated the reusable browser.');
+        }
+    }
+
+    /**
+     * Search refreshes only results and keeps selected sources.
+     * @Then /^standalone search preserves and clears its restriction$/
+     */
+    public function search_selection(): void {
+        $this->getSession()->getDriver()->executeScript(
+            'const doc=document.querySelector(".fp-object-container").contentDocument,'
+                . 'input=doc.querySelector("[data-multipicker-query]");'
+                . 'input.value="first.txt";input.dispatchEvent(new doc.defaultView.Event("input",{bubbles:true}));'
+        );
+        if (
+            !$this->getSession()->wait(
+                10000,
+                'document.querySelector(".fp-object-container").contentDocument'
+                . '.querySelectorAll("[data-multipicker-card]").length===1'
+                . '&&document.querySelector(".fp-object-container").contentDocument'
+                . '.querySelector("[data-multipicker-query]").value==="first.txt"'
+            )
+        ) {
+            throw new Exception('Native Server files search did not filter the listing.');
+        }
+        $this->getSession()->getDriver()->executeScript(
+            'document.querySelector(".fp-object-container").contentDocument'
+                . '.querySelector("[data-multipicker-clearsearch]").click();'
+        );
+        if (
+            !$this->getSession()->wait(
+                10000,
+                'document.querySelector(".fp-object-container").contentDocument'
+                . '.querySelectorAll("[data-multipicker-card]").length===2'
+                . '&&document.querySelector(".fp-object-container").contentDocument'
+                . '.querySelector("[data-multipicker-count]").textContent==="2"'
+            )
+        ) {
+            throw new Exception('Clear search lost the original directory or selection.');
+        }
+    }
+
+    /**
+     * Removal selection is separate from the reviewed import approval.
+     * @When /^I remove the nested standalone review folder$/
+     */
+    public function remove_review_folder(): void {
+        $this->getSession()->getDriver()->executeScript(
+            'const doc=document.querySelector(".fp-object-container").contentDocument;'
+                . 'doc.querySelector("[data-multipicker-reviewgroup]").click();'
+        );
+        $valid = $this->getSession()->getDriver()->evaluateScript(
+            '(()=>{const doc=document.querySelector(".fp-object-container").contentDocument;'
+                . 'return !doc.querySelector("[data-multipicker-import]").disabled'
+                . '&&!doc.querySelector("[data-multipicker-remove]").hidden;})()'
+        );
+        if (!$valid) {
+            throw new Exception('Selecting a review folder disabled import or failed to show removal.');
+        }
+        $this->getSession()->getDriver()->executeScript(
+            'document.querySelector(".fp-object-container").contentDocument.querySelector("[data-multipicker-remove]").click();'
+        );
+        if (
+            !$this->getSession()->wait(
+                10000,
+                'document.querySelector(".fp-object-container").contentDocument'
+                . '.querySelector("[data-multipicker-count]").textContent==="1"'
+            )
+        ) {
+            throw new Exception('Folder removal did not update the resulting file count.');
+        }
+    }
+
+    /**
+     * Select the alias mode offered by the actual native control.
+     * @When /^I choose standalone file aliases$/
+     */
+    public function choose_aliases(): void {
+        $this->getSession()->getDriver()->executeScript(
+            'const doc=document.querySelector(".fp-object-container").contentDocument,'
+                . 'select=doc.querySelector("[data-multipicker-copymode]");'
+                . 'if(select.querySelector("[data-multipicker-reference]").hidden){throw new Error("Aliases unavailable");}'
+                . 'select.value="reference";select.dispatchEvent(new doc.defaultView.Event("change",{bubbles:true}));'
+        );
+        if (
+            !$this->getSession()->wait(
+                10000,
+                '!document.querySelector(".fp-object-container").contentDocument'
+                . '.querySelector("[data-multipicker-review]").disabled'
+            )
+        ) {
+            throw new Exception('Alias selection did not finish validating native limits.');
+        }
+    }
+
+    /**
+     * Verify that the original activity form saved both native aliases.
+     * @Then /^the standalone destination contains two aliases$/
+     */
+    public function saved_aliases(): void {
+        global $DB;
+        $course = $DB->get_record('course', ['shortname' => 'SP'], '*', MUST_EXIST);
+        $folder = $DB->get_record('folder', ['course' => $course->id, 'name' => 'Destination files'], '*', MUST_EXIST);
+        $cm = get_coursemodule_from_instance('folder', $folder->id, $course->id, false, MUST_EXIST);
+        $files = get_file_storage()->get_area_files(
+            context_module::instance($cm->id)->id,
+            'mod_folder',
+            'content',
+            0,
+            'id',
+            false
+        );
+        $aliases = array_filter($files, static function ($file) {
+            return $file->is_external_file();
+        });
+        if (count($aliases) !== 2) {
+            throw new Exception('The owning native form did not retain both imported aliases.');
+        }
+        foreach ($aliases as $alias) {
+            if ($alias->get_content() !== $alias->get_filename() || $alias->get_author() !== 'Source teacher') {
+                throw new Exception('Saved alias content or attribution differs from its source.');
+            }
         }
     }
 }

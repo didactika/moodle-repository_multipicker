@@ -1,68 +1,74 @@
 <div align="center">
 
-<img src="pix/icon.svg" width="96" alt="MultiPicker icon">
+<img src="pix/icon.svg" width="96" alt="Server files MultiPicker icon">
 
-# MultiPicker for Moodle
+# Server files MultiPicker for Moodle
 
 *Select several Server files and folders in one import*
 
-[![Release](https://img.shields.io/github/v/release/didactika/moodle-repository_multipicker?style=flat-square)](https://github.com/didactika/moodle-repository_multipicker/releases)
-[![Moodle](https://img.shields.io/badge/Moodle-4.0–5.2-f98012?style=flat-square&logo=moodle&logoColor=white)](https://moodle.org)
+[![Release](https://img.shields.io/github/v/release/didactika/moodle-repository_multipicker?filter=v4.0.*&style=flat-square)](https://github.com/didactika/moodle-repository_multipicker/releases)
+[![Moodle](https://img.shields.io/badge/Moodle-4.0%E2%80%935.2-f98012?style=flat-square&logo=moodle&logoColor=white)](https://moodle.org)
 [![PHP](https://img.shields.io/badge/PHP-7.4+-777bb4?style=flat-square&logo=php&logoColor=white)](https://www.php.net)
 [![License](https://img.shields.io/badge/License-GPL_v3-blue?style=flat-square)](LICENSE)
 
-[Overview](#overview) · [Installation](#installation) · [Usage](#usage) · [Configuration](#configuration) · [Troubleshooting](#troubleshooting)
+[Overview](#overview) • [Installation](#installation) • [Usage](#usage) • [Configuration](#configuration) • [Troubleshooting](#troubleshooting)
 
 </div>
 
-MultiPicker (**repository_multipicker**) is a standalone repository that adds multiple selection to the files available through Moodle's Server files browser. It copies several files and recursive folders into the current native filemanager draft without requiring a local plugin, catalog, relationship profile or scheduled task.
-
-> [!IMPORTANT]
-> This is the new standalone MultiPicker. Existing installations of the previous CourseFiles solution under `repository_multipicker` must complete the [CourseFiles adoption](https://github.com/didactika/moodle-local_coursefiles#existing-multipicker-installations) before installing it.
+Server files MultiPicker (**repository_multipicker**) adds multiple selection to Moodle's Server files repository. Teachers can select several files and folders, review the resulting files and import them into the activity's normal filemanager. It works independently and needs no local companion.
 
 ## Overview
 
-- Select files and folders together; recursive expansion removes overlapping source occurrences.
-- Browse one directory at a time with pages of 30 nodes.
-- Review all resulting paths before copying; author and licence remain those of the source.
-- Existing identical paths are skipped; different-content path conflicts block the entire import.
-- Revalidate source access, current draft content, accepted types, file count and byte limits before copying.
-- Session approvals expire after one hour and are consumed after a successful copy.
-- Native single-file controls retain Server files behaviour; multiple selection is available in native filemanagers.
+The repository uses the same accessible files, directories and search as Server files. It adds cards, list and expandable tree views with a shared selection. Folders remain collapsed until opened, and only the requested branch is loaded.
+
+- Select files and recursive folders together, including results from other pages.
+- Search without losing the selection, and clear the search independently.
+- Keep the source folders or place the resulting files in the current destination directory.
+- Copy files or create aliases when the owning control supports references.
+- Review the resulting paths before importing; existing identical files are skipped and conflicting paths are reported.
+- Preserve the source author and licence, and respect the owning form’s file types, file count and storage limits.
 
 ## Installation
 
-Place this distribution in `repository/multipicker`, run Moodle's upgrade and enable MultiPicker under **Site administration → Plugins → Repositories → Manage repositories**. Install no local companion.
+**Requirements:** Moodle 4.0–5.2, PHP 7.4 or newer, and the database requirements of the selected Moodle release. This distribution’s release is **4.0.0**.
+
+**From a release:** download the matching release ZIP, open **Site administration → Plugins → Install plugins**, upload the package and follow the prompts.
+
+**From Git:**
 
 ```bash
+cd /path/to/moodle
 git clone --branch MOODLE_400_STABLE https://github.com/didactika/moodle-repository_multipicker.git repository/multipicker
 php admin/cli/upgrade.php --non-interactive
 ```
 
-On Moodle versions with a `public/` web root, install under `public/repository/multipicker`. The Moodle 5.3 distribution is maintained separately on `main`; it uses typed frontend integration. Compatibility verification is recorded in the central workspace documentation; this initial distribution is beta until its complete matrix passes.
+Enable **Server files MultiPicker** under **Site administration → Plugins → Repositories → Manage repositories**.
 
 ## Usage
 
-1. Open a native filemanager and choose MultiPicker in the file picker.
-2. Navigate through accessible Server files directories, checking files or folders. Selection remains across pages and directories.
-3. Choose **Review selection** to inspect the resulting files and destination paths.
-4. Choose **Import files** to copy the approved batch into the native draft, then save the owning Moodle form normally.
+1. Open **Add files** in the activity’s filemanager and choose **Server files MultiPicker**.
+2. Browse or search, and use cards, list or tree to select the files and folders you need.
+3. Choose the import method and whether to keep folders.
+4. Open **Review selection**, check the resulting files and choose **Import files**.
+5. Save the owning Moodle form normally. Cancelling that form follows Moodle’s normal draft-file behavior.
 
 ## Configuration
 
-The repository instance's configured name appears in the chooser. The `repository/multipicker:view` capability is granted to editing teachers and managers by default. Access to individual sources remains controlled by Moodle's file-browser permissions; this repository does not grant additional access to other courses or private material.
+The repository name comes from Moodle’s language strings and is always **Server files MultiPicker**. No custom instance name is required.
 
-File count comes from the owning native filemanager's client options and is checked during review/import; the owning Moodle form remains the authority for validation when saved. Accepted types and byte limits are also retained in the server session. Limit metadata never replaces source authorization.
+The **repository/multipicker:view** capability permits use of the chooser. Editing teachers and managers have it by default. Moodle’s File Browser permissions continue to decide which source files each user can access; repository access grants no extra access to private material.
+
+Destination limits come from the owning filemanager. A folder that would exceed those limits is rejected before import. Aliases remain linked to their original source and are offered only when the control permits references.
 
 ## Troubleshooting
 
 | Problem | Check |
 |---|---|
-| A directory is absent | The same core file-browser permissions apply as in Server files. |
-| Selection exceeds a limit | Remove files or directories, or change the owning form's permitted limits. |
-| Destination path conflict | Clear the selection and select only the required files, or use another native destination directory. |
-| Approval expired or source changed | Open the chooser again and review the current source files. |
+| A source is absent | The same File Browser permissions and file-type restrictions apply as in Server files |
+| A selection exceeds a limit | Remove files or folders, or change the owning form’s allowed limits |
+| A destination path conflicts | Clear that source from the selection or choose another destination directory |
+| A session expired | Reopen the repository and review the current files before importing |
 
 ## Getting help
 
-Open an [issue](https://github.com/didactika/moodle-repository_multipicker/issues) with the Moodle/PHP version, source activity and native destination form. Plugin-owned persistent personal data is not stored; copied files use Moodle's normal draft lifecycle.
+Open an [issue](https://github.com/didactika/moodle-repository_multipicker/issues) with your Moodle and PHP versions, the source activity, the destination form and the expected and actual behavior.

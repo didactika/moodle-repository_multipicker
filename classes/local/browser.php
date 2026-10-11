@@ -33,14 +33,19 @@ class browser {
      * Resolve a live approval scope for the current user.
      *
      * @param string $token Session scope.
+     * @param int $draftid Native draft supplied when a new filemanager has finished initialization.
      * @return array Current scope.
      */
-    public static function scope(string $token): array {
+    public static function scope(string $token, int $draftid = 0): array {
         global $SESSION, $USER;
-        require_capability('repository/multipicker:view', \context_system::instance());
         $scope = $SESSION->repository_multipicker[$token] ?? null;
-        if (!$scope || $scope['userid'] != $USER->id || $scope['expires'] < time() || !$scope['draftid']) {
+        if (!$scope || $scope['userid'] != $USER->id || $scope['expires'] < time()) {
             throw new \moodle_exception('unavailable', 'repository_multipicker');
+        }
+        require_capability('repository/multipicker:view', \context::instance_by_id($scope['contextid']));
+        if (!$scope['draftid'] && $draftid > 0) {
+            $SESSION->repository_multipicker[$token]['draftid'] = $draftid;
+            $scope['draftid'] = $draftid;
         }
         return $scope;
     }
@@ -76,9 +81,33 @@ class browser {
      * @param array $scope Bound native context.
      * @param string $path Encoded directory.
      * @param int $page Zero-based page.
+     * @param string $query Native Server files search terms.
      * @return array Template data.
      */
-    public static function listing(array $scope, string $path, int $page): array {
+    public static function listing(array $scope, string $path, int $page, string $query = ''): array {
+        if (!empty($scope['repositoryid'])) {
+            $repository = \repository::get_repository_by_id(
+                $scope['repositoryid'],
+                $scope['contextid'],
+                ['mimetypes' => $scope['types']]
+            );
+            $listing = $repository->get_native_listing($path, $query, $page);
+            $nodes = $listing['list'];
+            $search = $query !== '';
+            $cards = [];
+            foreach ($search ? $nodes : array_slice($nodes, max(0, $page) * 30, 30) as $child) {
+                $cards[] = ['source' => $child['path'] ?? $child['source'],
+                    'name' => $child['title'], 'folder' => isset($child['path']),
+                    'size' => isset($child['size']) ? display_size($child['size']) : '',
+                    'author' => $child['author'] ?? '', 'license' => $child['license'] ?? ''];
+            }
+            $ancestors = $listing['path'] ?? [];
+            $current = array_pop($ancestors);
+            $parent = array_pop($ancestors);
+            return ['cards' => $cards, 'path' => $path, 'page' => max(0, $page),
+                'previous' => $page > 0, 'next' => $search ? !empty($listing['pages']) : count($nodes) > ($page + 1) * 30,
+                'parent' => $parent['path'] ?? '', 'location' => $current['name'] ?? ''];
+        }
         $context = \context::instance_by_id($scope['contextid']);
         $coursecontext = $context->get_course_context(false);
         $node = $path !== '' ? self::source($path)
@@ -109,16 +138,32 @@ class browser {
      * @param array $sources Encoded selected nodes.
      * @param int $maxfiles Native client maximum; core validates again when the owning form is saved.
      * @param string $basepath Native destination directory.
+     * @param bool $preservefolders Preserve selected source folder paths.
+     * @param array $excluded Source nodes removed from a recursive selection.
      * @return array Resulting file operations.
      */
-    public static function review(array $scope, array $sources, int $maxfiles, string $basepath): array {
+    public static function review(
+        array $scope,
+        array $sources,
+        int $maxfiles,
+        string $basepath,
+        bool $preservefolders = true,
+        array $excluded = []
+    ): array {
         global $USER;
-        if (!$sources || count($sources) > 500) {
+        if (!$sources || count($sources) > 500 || !$scope['draftid']) {
             throw new \moodle_exception('unavailable', 'repository_multipicker');
         }
         $basepath = '/' . trim(clean_param($basepath, PARAM_PATH), '/') . '/';
         $basepath = $basepath === '//' ? '/' : $basepath;
         $pending = [];
+        $omitted = [];
+        if (count($excluded) > 5000) {
+            throw new \moodle_exception('limit', 'repository_multipicker');
+        }
+        foreach ($excluded as $encoded) {
+            $omitted[json_encode(self::source($encoded)->get_params())] = true;
+        }
         foreach (array_unique($sources) as $encoded) {
             $node = self::source($encoded);
             $pending[] = [$node, $node->is_directory() ? clean_param($node->get_visible_name(), PARAM_FILE) . '/' : ''];
@@ -142,7 +187,7 @@ class browser {
             }
             [$node, $relative] = array_pop($pending);
             $identity = json_encode($node->get_params());
-            if (isset($visited[$identity])) {
+            if (isset($visited[$identity]) || isset($omitted[$identity])) {
                 continue;
             }
             $visited[$identity] = true;
@@ -173,7 +218,7 @@ class browser {
             if (!in_array('*', $types, true) && !file_extension_in_typegroup($file->get_filename(), $types)) {
                 throw new \moodle_exception('limit', 'repository_multipicker');
             }
-            $filepath = $basepath . $relative;
+            $filepath = $basepath . ($preservefolders ? $relative : '');
             $key = $filepath . $file->get_filename();
             if (isset($paths[$key])) {
                 if ($paths[$key] === $file->get_contenthash()) {
@@ -216,7 +261,14 @@ class browser {
                 $scope[$key] = $value;
             }
         }
-        $operations = self::review($scope, $scope['sources'], $scope['maxfiles'], $scope['basepath']);
+        $operations = self::review(
+            $scope,
+            $scope['sources'],
+            $scope['maxfiles'],
+            $scope['basepath'],
+            $scope['preservefolders'] ?? true,
+            $scope['excluded'] ?? []
+        );
         if ($operations !== $scope['approval']) {
             throw new \moodle_exception('unavailable', 'repository_multipicker');
         }
@@ -234,14 +286,29 @@ class browser {
                 $params['filepath'],
                 $params['filename']
             );
-            $copied = $fs->create_file_from_storedfile(['contextid' => $context->id, 'component' => 'user',
+            $destination = ['contextid' => $context->id, 'component' => 'user',
                 'filearea' => 'draft', 'itemid' => $scope['draftid'], 'filepath' => $operation['filepath'],
                 'filename' => $operation['filename'], 'userid' => $USER->id,
-                'author' => $file->get_author(), 'license' => $file->get_license()], $file);
+                'author' => $file->get_author(), 'license' => $file->get_license()];
+            if (($scope['copymode'] ?? 'copy') === 'reference') {
+                $destination['contenthash'] = $file->get_contenthash();
+                $destination['filesize'] = $file->get_filesize();
+                $repositoryid = $file->is_external_file() ? $file->get_repository_id() : $scope['repositoryid'];
+                $reference = $file->is_external_file() ? $file->get_reference() : \file_storage::pack_reference($params);
+                $copied = $fs->create_file_from_reference($destination, $repositoryid, $reference);
+            } else {
+                $copied = $fs->create_file_from_storedfile($destination, $file);
+            }
             $first = $first ?: $copied;
         }
         $transaction->allow_commit();
-        unset($SESSION->repository_multipicker[$token]);
+        // Native filemanagers can reopen the same embedded browser after an import.
+        // Consume its approval, while retaining the authorized browsing scope.
+        $approvalfields = ['approval', 'approvalnonce', 'sources', 'excluded', 'maxfiles', 'basepath',
+            'copymode', 'preservefolders'];
+        foreach ($approvalfields as $key) {
+            unset($SESSION->repository_multipicker[$token][$key]);
+        }
         return ['url' => \moodle_url::make_draftfile_url(
             $scope['draftid'],
             $first->get_filepath(),
