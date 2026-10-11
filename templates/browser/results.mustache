@@ -3,21 +3,25 @@
     @copyright 2026 Didactika.org
     @author Hector Arrechea <hectorlazaroarrechea@gmail.com>
     @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
-    Example context (json): {"cards":[]}
+    Example context (json): {"cards":[{"name":"Example folder","source":"example","folder":true}]}
 }}
-<div class="row">
+
+<div class="multipicker-items">
 {{#cards}}
-    <div class="col-12 col-md-6 mb-2">
-        <div class="card h-100" data-multipicker-card>
-            <div class="card-body p-3">
-                <div class="d-flex align-items-center justify-content-between mb-2">
-                    <label class="mb-0"><input type="checkbox" class="me-2" value="{{source}}" data-multipicker-check aria-label="{{name}}">{{#folder}}{{#pix}}f/folder, core{{/pix}}{{/folder}}{{^folder}}{{#pix}}f/document, core{{/pix}}{{/folder}}</label>
-                    {{#folder}}<button type="button" class="btn btn-sm btn-outline-primary" data-multipicker-open="{{source}}" title="{{#str}}open, repository_multipicker{{/str}}">{{#pix}}t/right, core{{/pix}}</button>{{/folder}}
+    <div class="multipicker-node" data-multipicker-node data-source="{{source}}">
+        <div class="card" data-multipicker-card>
+            <div class="card-body p-2">
+                <div class="multipicker-card-tools d-flex align-items-center mb-2">
+                    <input type="checkbox" class="mr-2" value="{{source}}" data-multipicker-check aria-label="{{name}}">
+                    {{#folder}}{{#pix}}f/folder, core{{/pix}}<span class="badge badge-light ml-1">{{#str}}folder, repository_multipicker{{/str}}</span>{{/folder}}
+                    {{^folder}}{{#pix}}f/document, core{{/pix}}<span class="badge badge-light ml-1">{{#str}}file, repository_multipicker{{/str}}</span>{{/folder}}
+                    {{#folder}}<button type="button" class="btn btn-sm multipicker-open ml-auto" data-multipicker-open="{{source}}" aria-expanded="false" title="{{#str}}open, repository_multipicker{{/str}}" aria-label="{{#str}}open, repository_multipicker{{/str}}">{{#pix}}t/right, core{{/pix}}</button>{{/folder}}
                 </div>
-                <strong class="multipicker-name d-block" title="{{name}}">{{name}}</strong>
-                <div class="small text-muted mt-2">{{size}}</div>
+                <strong class="multipicker-name" title="{{name}}">{{name}}</strong>
+                <div class="small text-muted border-top pt-2 mt-2 multipicker-meta">{{author}}{{#license}} · {{license}}{{/license}}{{#size}} · {{size}}{{/size}}</div>
             </div>
         </div>
+        <div class="multipicker-children ml-3 pl-2 border-left" data-multipicker-children hidden></div>
     </div>
 {{/cards}}
 </div>

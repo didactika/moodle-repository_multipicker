@@ -16,13 +16,30 @@ var selectors_default = {
   selectall: "[data-multipicker-selectall]",
   clear: "[data-multipicker-clear]",
   review: "[data-multipicker-review]",
-  import: "[data-multipicker-import]",
+  "import": "[data-multipicker-import]",
   count: "[data-multipicker-count]",
   location: "[data-multipicker-location]",
   previous: "[data-multipicker-previous]",
   next: "[data-multipicker-next]",
   selectionActions: "[data-multipicker-selection-actions]",
-  pagination: "[data-multipicker-pagination]"
+  pagination: "[data-multipicker-pagination]",
+  filters: "[data-multipicker-filters]",
+  query: "[data-multipicker-query]",
+  clearSearch: "[data-multipicker-clearsearch]",
+  copyMode: "[data-multipicker-copymode]",
+  preserve: "[data-multipicker-preserve]",
+  reference: "[data-multipicker-reference]",
+  layout: "[data-multipicker-layout]",
+  node: "[data-multipicker-node]",
+  children: "[data-multipicker-children]",
+  treePage: "[data-multipicker-treepage]",
+  reviewNode: "[data-multipicker-reviewnode]",
+  reviewRow: "[data-multipicker-reviewrow]",
+  reviewCheck: "[data-multipicker-reviewcheck]",
+  reviewGroup: "[data-multipicker-reviewgroup]",
+  reviewChildren: "[data-multipicker-reviewchildren]",
+  reviewToggle: "[data-multipicker-reviewtoggle]",
+  remove: "[data-multipicker-remove]"
 };
 export {
   selectors_default as default

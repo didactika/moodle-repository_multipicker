@@ -11,6 +11,7 @@
 import Selectors from '@moodle/lms/repository_multipicker/local/selectors';
 import {createActions} from '@moodle/lms/repository_multipicker/local/actions';
 import {register} from '@moodle/lms/repository_multipicker/local/listeners';
+import {mount} from '@moodle/lms/repository_multipicker/local/native';
 
 /** @param {string} scope Session scope. */
 export const init = (scope: string) => {
@@ -19,6 +20,7 @@ export const init = (scope: string) => {
         return;
     }
     root.dataset.ready = 'true';
+    mount(root);
     const actions = createActions(root);
     register(root, actions);
     actions.load();

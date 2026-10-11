@@ -1,37 +1,157 @@
+/* Core versions use different decimal styles; keep leading zeros across maintenance lines. */
+/* stylelint-disable number-leading-zero */
 /* @copyright 2026 Didactika.org
  * @author Hector Arrechea <hectorlazaroarrechea@gmail.com>
  * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+.multipicker-native-host .fp-navbar {
+    display: none;
+}
+.multipicker-native-host .fp-content {
+    /* Native YUI applies an inline height; retain a stable chooser viewport. */
+    /* stylelint-disable-next-line declaration-no-important, csstree/validator */
+    height: min(76vh, 48rem) !important;
+}
+.multipicker-native-host .fp-object-container {
+    height: 100%;
+    width: 100%;
+    border: 0;
+}
+body.multipicker-embedded,
+.multipicker-embedded #page,
+.multipicker-embedded #page-content,
+.multipicker-embedded #region-main {
+    background: var(--multipicker-background, #fff);
+}
+.multipicker-embedded {
+    overflow: hidden;
+}
+.multipicker-embedded #page {
+    padding: 0;
+}
 .multipicker-browser {
     display: flex;
     flex-direction: column;
-    height: 70vh;
-    max-height: 45rem;
-    min-height: 20rem;
+    height: calc(100vh - 0.5rem);
+    min-height: 0;
+    background: var(--multipicker-background, #fff);
+}
+.multipicker-browser > * {
+    flex-shrink: 0;
 }
 .multipicker-browser .multipicker-results {
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    overflow-x: hidden;
+    flex: 1 1 auto;
+    min-height: 5rem;
+    overflow: auto;
+    padding: 0.2rem;
+}
+.multipicker-copy-options,
+.multipicker-items {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.6rem;
+}
+.multipicker-node {
+    min-width: 0;
+}
+.multipicker-browser[data-layout="cards"] .card {
+    height: 100%;
+}
+.multipicker-browser[data-layout="cards"] .multipicker-card-tools {
+    min-height: 2rem;
 }
 .multipicker-browser .multipicker-name {
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
     overflow: hidden;
-    min-height: 2.5em;
+    height: 2.7em;
+    overflow-wrap: anywhere;
+}
+.multipicker-browser .multipicker-meta {
+    min-height: 2rem;
+    overflow-wrap: anywhere;
 }
 .multipicker-browser [data-multipicker-card] {
     cursor: pointer;
 }
-.multipicker-browser [data-multipicker-card].border-primary {
-    background-color: var(--bs-primary-bg-subtle, #eef6ff);
-}
+.multipicker-browser [data-multipicker-card].border-primary,
 .multipicker-browser [data-multipicker-card]:hover {
+    background: var(--bs-primary-bg-subtle, #eef6ff);
     border-color: var(--bs-primary, #0f6cbf);
 }
+.multipicker-browser .multipicker-open {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    background: #e2edf7;
+    color: var(--bs-primary, #0f6cbf);
+}
+.multipicker-browser .multipicker-open:hover {
+    background: #cbdfee;
+}
+.multipicker-browser .multipicker-open .icon {
+    margin: 0;
+}
+.multipicker-browser[data-layout="cards"] .multipicker-children,
+.multipicker-browser[data-layout="list"] .multipicker-children {
+    display: none;
+}
+.multipicker-browser[data-layout="list"] .multipicker-items,
+.multipicker-browser[data-layout="tree"] .multipicker-items {
+    display: block;
+}
+.multipicker-browser[data-layout="list"] .multipicker-node,
+.multipicker-browser[data-layout="tree"] .multipicker-node {
+    margin-bottom: 0.4rem;
+}
+.multipicker-browser[data-layout="list"] .card-body {
+    display: grid;
+    grid-template-columns: 7rem minmax(0, 1fr) 8rem;
+    gap: 0.6rem;
+    align-items: center;
+}
+.multipicker-browser[data-layout="list"] .multipicker-name,
+.multipicker-browser[data-layout="tree"] .multipicker-name {
+    height: auto;
+}
+.multipicker-browser[data-layout="list"] .multipicker-meta {
+    border-top: 0;
+}
+.multipicker-browser[data-layout="tree"] .card {
+    border-color: transparent;
+}
+.multipicker-browser[data-layout="tree"] .card-body {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+.multipicker-browser[data-layout="tree"] .multipicker-card-tools {
+    flex-shrink: 0;
+}
+.multipicker-browser[data-layout="tree"] .multipicker-meta {
+    display: none;
+}
 .multipicker-browser [aria-busy="true"] {
-    opacity: .45;
+    opacity: 0.55;
     pointer-events: none;
+}
+.multipicker-footer {
+    background: var(--multipicker-background, #fff);
+}
+
+@media (max-width: 500px) {
+    .multipicker-copy-options,
+    .multipicker-items {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .multipicker-browser[data-layout="list"] .card-body {
+        grid-template-columns: 5rem minmax(0, 1fr);
+    }
+    .multipicker-browser[data-layout="list"] .multipicker-meta {
+        grid-column: 2;
+    }
 }

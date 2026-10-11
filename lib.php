@@ -31,18 +31,45 @@ require_once($CFG->dirroot . '/repository/local/lib.php');
  */
 class repository_multipicker extends repository_local {
     /**
+     * Keep the native repository entry translated and independent of instance labels.
+     * @return string Repository name.
+     */
+    public function get_name() {
+        return get_string('pluginname', 'repository_multipicker');
+    }
+
+    /**
+     * This repository does not expose a custom instance-name setting.
+     * @return array Instance settings.
+     */
+    public static function get_instance_option_names() {
+        return [];
+    }
+
+    /**
+     * Reuse the exact Server files hierarchy and source permissions.
+     * @param string $path Native source path.
+     * @param string $query Search terms.
+     * @param int $page Search page.
+     * @return array Core listing.
+     */
+    public function get_native_listing(string $path, string $query = '', int $page = 0): array {
+        return $query === '' ? parent::get_listing($path) : parent::search($query, $page);
+    }
+    /**
      * @var string|null Approval currently being downloaded by core.
      */
     private $approval = null;
 
     /**
-     * Return internal copies only.
+     * Batch approvals require native copying rather than a reference to one file.
      *
-     * @return int Internal copies only.
+     * @return int Native copy mode.
      */
     public function supported_returntypes() {
         return FILE_INTERNAL;
     }
+
 
     /**
      * Open the embedded chooser for native filemanagers.
@@ -56,7 +83,7 @@ class repository_multipicker extends repository_local {
         if (optional_param('env', '', PARAM_ALPHA) !== 'filemanager') {
             return parent::get_listing($path, $page);
         }
-        require_capability('repository/multipicker:view', context_system::instance());
+        require_capability('repository/multipicker:view', $this->context);
         $token = bin2hex(random_bytes(24));
         $SESSION->repository_multipicker = $SESSION->repository_multipicker ?? [];
         foreach ($SESSION->repository_multipicker as $key => $value) {
@@ -70,9 +97,9 @@ class repository_multipicker extends repository_local {
             'types' => $this->options['mimetypes'] ?? ['*'],
             'maxbytes' => optional_param('maxbytes', -1, PARAM_INT),
             'areamaxbytes' => optional_param('areamaxbytes', -1, PARAM_INT),
-            'name' => $this->get_name(),
+            'name' => get_string('pluginname', 'repository_multipicker'),
         ];
-        return ['nologin' => true, 'nosearch' => true, 'norefresh' => true,
+        return ['nologin' => true, 'nosearch' => true, 'norefresh' => true, 'allowcaching' => false,
             'object' => ['type' => 'text/html', 'src' => (new moodle_url(
                 '/repository/multipicker/browser.php',
                 ['scope' => $token]
@@ -89,17 +116,22 @@ class repository_multipicker extends repository_local {
         if (strpos($source, 'batch:') !== 0) {
             return parent::get_file_reference($source);
         }
-        $token = substr($source, 6);
+        [$token, $nonce] = array_pad(explode(':', substr($source, 6), 2), 2, '');
         $scope = \repository_multipicker\local\browser::scope($token);
         if (
             empty($scope['approval']) || $scope['repositoryid'] != $this->id
                 || $scope['contextid'] != $this->context->id
+                || empty($scope['approvalnonce']) || !hash_equals($scope['approvalnonce'], $nonce)
         ) {
             throw new moodle_exception('unavailable', 'repository_multipicker');
         }
         $this->approval = $token;
-        $file = \repository_multipicker\local\browser::source($scope['approval'][0]['source']);
-        return file_storage::pack_reference($file->get_params());
+        // A batch has no single stored-file identity. Core must not unwrap its first file's alias
+        // and switch repositories before reaching our native copy_to_area() implementation.
+        return file_storage::pack_reference([
+            'contextid' => $scope['contextid'], 'component' => 'repository_multipicker',
+            'filearea' => 'batch', 'itemid' => 0, 'filepath' => '/', 'filename' => $nonce,
+        ]);
     }
 
     /**

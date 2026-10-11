@@ -10,12 +10,14 @@ var __name = (target, value) => __defProp(target, "name", { value, configurable:
 import Selectors from "@moodle/lms/repository_multipicker/local/selectors";
 import { createActions } from "@moodle/lms/repository_multipicker/local/actions";
 import { register } from "@moodle/lms/repository_multipicker/local/listeners";
+import { mount } from "@moodle/lms/repository_multipicker/local/native";
 const init = /* @__PURE__ */ __name((scope) => {
   const root = document.querySelector(Selectors.root);
   if (!root || root.dataset.scope !== scope || root.dataset.ready) {
     return;
   }
   root.dataset.ready = "true";
+  mount(root);
   const actions = createActions(root);
   register(root, actions);
   actions.load();

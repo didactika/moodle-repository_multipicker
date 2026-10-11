@@ -23,35 +23,56 @@
  * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+define('AJAX_SCRIPT', !empty($_POST['ajax']));
 require(__DIR__ . '/../../config.php');
+require_once($CFG->dirroot . '/repository/lib.php');
 require_login();
 $token = required_param('scope', PARAM_ALPHANUM);
-$scope = \repository_multipicker\local\browser::scope($token);
+$scope = \repository_multipicker\local\browser::scope($token, optional_param('draftid', 0, PARAM_INT));
 $PAGE->set_context(context::instance_by_id($scope['contextid']));
 $PAGE->set_url('/repository/multipicker/browser.php', ['scope' => $token]);
 $PAGE->set_pagelayout('embedded');
-$PAGE->set_title($scope['name']);
+$PAGE->set_title(get_string('pluginname', 'repository_multipicker'));
 
 if (optional_param('ajax', 0, PARAM_BOOL)) {
     require_sesskey();
     header('Content-Type: application/json; charset=utf-8');
+    $renderer = $PAGE->get_renderer('core');
     try {
         $action = required_param('action', PARAM_ALPHA);
         if ($action === 'list') {
             $listing = \repository_multipicker\local\browser::listing(
                 $scope,
                 optional_param('path', '', PARAM_RAW),
-                optional_param('page', 0, PARAM_INT)
+                optional_param('page', 0, PARAM_INT),
+                optional_param('query', '', PARAM_TEXT)
             );
-            echo json_encode(['html' => $OUTPUT->render_from_template('repository_multipicker/browser/results', $listing),
+            echo json_encode(['html' => $renderer->render_from_template('repository_multipicker/browser/results', $listing),
                 'parent' => $listing['parent'], 'page' => $listing['page'], 'next' => $listing['next'],
                 'previous' => $listing['previous'], 'location' => $listing['location']]);
-        } else if ($action === 'review' || $action === 'approve') {
+        } else if (in_array($action, ['inspect', 'review', 'approve'], true)) {
             $sources = required_param_array('sources', PARAM_RAW);
             $maxfiles = required_param('maxfiles', PARAM_INT);
             $basepath = optional_param('basepath', '/', PARAM_PATH);
-            $operations = \repository_multipicker\local\browser::review($scope, $sources, $maxfiles, $basepath);
-            if (!$operations) {
+            $preservefolders = optional_param('preservefolders', true, PARAM_BOOL);
+            $excluded = optional_param_array('excluded', [], PARAM_RAW);
+            $copymode = optional_param('copymode', 'copy', PARAM_ALPHA);
+            if (!in_array($copymode, ['copy', 'reference'], true)) {
+                throw new moodle_exception('unavailable', 'repository_multipicker');
+            }
+            $operations = \repository_multipicker\local\browser::review(
+                $scope,
+                $sources,
+                $maxfiles,
+                $basepath,
+                $preservefolders,
+                $excluded
+            );
+            if ($action === 'inspect') {
+                echo json_encode(['count' => count($operations)]);
+                exit;
+            }
+            if (!$operations && $action === 'approve') {
                 throw new moodle_exception('nothing', 'repository_multipicker');
             }
             unset($SESSION->repository_multipicker[$token]['approval']);
@@ -60,13 +81,21 @@ if (optional_param('ajax', 0, PARAM_BOOL)) {
                 $SESSION->repository_multipicker[$token]['sources'] = $sources;
                 $SESSION->repository_multipicker[$token]['maxfiles'] = $maxfiles;
                 $SESSION->repository_multipicker[$token]['basepath'] = $basepath;
+                $SESSION->repository_multipicker[$token]['preservefolders'] = $preservefolders;
+                $SESSION->repository_multipicker[$token]['copymode'] = $copymode;
+                $SESSION->repository_multipicker[$token]['excluded'] = $excluded;
+                $SESSION->repository_multipicker[$token]['approvalnonce'] = bin2hex(random_bytes(16));
             }
-            echo json_encode(['html' => $OUTPUT->render_from_template(
+            $source = 'batch:' . $token . ':' . ($SESSION->repository_multipicker[$token]['approvalnonce'] ?? '');
+            echo json_encode(['html' => $renderer->render_from_template(
                 'repository_multipicker/browser/review',
-                ['files' => $operations, 'count' => count($operations)]
+                (new \repository_multipicker\output\review($operations, $copymode === 'reference'))->export_for_template($renderer)
             ),
-                'file' => ['title' => $operations[0]['filename'], 'source' => 'batch:' . $token,
-                    'repository_id' => $scope['repositoryid'], 'thumbnail' => $OUTPUT->image_url('f/document')->out(false)]]);
+                'count' => count($operations),
+                'file' => $action === 'approve' ? ['title' => $operations[0]['filename'], 'source' => $source,
+                    'sourcekey' => sha1($source . repository::get_secret_key() . sesskey()),
+                    'repository_id' => $scope['repositoryid'],
+                    'thumbnail' => $renderer->image_url('f/document')->out(false)] : null]);
         } else {
             throw new moodle_exception('unavailable', 'repository_multipicker');
         }
@@ -80,6 +109,9 @@ $PAGE->requires->js_call_amd('repository_multipicker/browser', 'init', [$token])
 echo $OUTPUT->header();
 echo $OUTPUT->render_from_template(
     'repository_multipicker/browser/shell',
-    ['scope' => $token, 'name' => format_string($scope['name']), 'sesskey' => sesskey()]
+    ['scope' => $token, 'name' => get_string('pluginname', 'repository_multipicker'), 'sesskey' => sesskey(),
+        'searchhelp' => $OUTPUT->help_icon('search', 'repository_multipicker'),
+        'copyhelp' => $OUTPUT->help_icon('copymode', 'repository_multipicker'),
+        'foldershelp' => $OUTPUT->help_icon('preservefolders', 'repository_multipicker')]
 );
 echo $OUTPUT->footer();
