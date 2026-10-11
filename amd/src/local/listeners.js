@@ -83,7 +83,14 @@ export const register = (root, actions) => {
             actions.import();
         } else if (target.closest(Selectors.remove)) {
             actions.remove();
-        } else if (!target.closest('input, label, button, a')) {
+        }
+    });
+    root.addEventListener('click', event => {
+        const target = event.target;
+        if (!(target instanceof Element)) {
+            return;
+        }
+        if (!target.closest('input, label, button, a')) {
             const check = target.closest(Selectors.card)?.querySelector(Selectors.check);
             if (check && !check.disabled) {
                 check.checked = !check.checked;

@@ -27,14 +27,14 @@ export const createActions = (root) => {
     const scope = root.dataset.scope;
     const element = (selector) => root.querySelector(selector);
     const results = element(Selectors.results);
-    let path = '',
-parent = '',
-query = '';
-    let page = 0,
-count = 0;
-    let review = false,
-busy = false,
-pendingSearch = false;
+    let path = '';
+    let parent = '';
+    let query = '';
+    let page = 0;
+    let count = 0;
+    let review = false;
+    let busy = false;
+    let pendingSearch = false;
     let approvedFile;
     const belongs = (source, nodes) => {
         for (let depth = 0; source && depth < 100; depth++) {
@@ -47,16 +47,23 @@ pendingSearch = false;
     };
     const isSelected = (source) => {
         for (let depth = 0; source && depth < 100; depth++) {
-            if (excluded.has(source)) { return false; }
-            if (selected.has(source)) { return true; }
+            if (excluded.has(source)) {
+                return false;
+            }
+            if (selected.has(source)) {
+                return true;
+            }
             source = parents.get(source) || '';
         }
         return false;
     };
     const reviewedState = (check) => {
-        if (reviewChecks.has(check.value)) { return reviewChecks.get(check.value); }
+        if (reviewChecks.has(check.value)) {
+            return reviewChecks.get(check.value);
+        }
         const path = check.closest(Selectors.reviewNode).dataset.path || '/';
-        let state = false, length = -1;
+        let state = false;
+        let length = -1;
         reviewChecks.forEach((selected, key) => {
             if (key.startsWith('folder:') && path.startsWith(key.slice(7)) && key.length > length) {
                 state = selected;
@@ -76,13 +83,17 @@ pendingSearch = false;
         [...root.querySelectorAll(Selectors.node)].reverse().forEach(node => {
             const children = node.querySelector(Selectors.children);
             const check = node.querySelector(Selectors.check);
-            if (!children || !check) { return; }
+            if (!children || !check) {
+                return;
+            }
             const files = [...children.querySelectorAll(Selectors.check)];
             const any = files.some(file => file.checked || file.indeterminate);
             const all = files.length > 0 && files.every(file => file.checked && !file.indeterminate);
             check.indeterminate = children.dataset.complete === 'true'
                 ? any && !all : !check.checked && (folderCounts[check.value] || 0) > 0;
-            if (children.dataset.complete === 'true') { check.checked = all; }
+            if (children.dataset.complete === 'true') {
+                check.checked = all;
+            }
             check.closest(Selectors.card).classList.toggle('border-primary', check.checked || check.indeterminate);
         });
         element(Selectors.count).textContent = String(count);
@@ -107,7 +118,9 @@ pendingSearch = false;
             if (check.matches(Selectors.reviewGroup)) {
                 reviewChecks.forEach((state, key) => {
                     if (key !== check.value && (reviewPaths.get(key) || key.slice(7)).startsWith(path)
-                            && state !== check.checked) { check.indeterminate = true; }
+                            && state !== check.checked) {
+                        check.indeterminate = true;
+                    }
                 });
             }
         });
@@ -176,8 +189,8 @@ pendingSearch = false;
         folderCounts = response.counts || {};
     };
     const changeSelection = (mutate) => run(async() => {
-        const oldSelection = [...selected],
-oldExclusions = [...excluded];
+        const oldSelection = [...selected];
+        const oldExclusions = [...excluded];
         mutate();
         sync();
         try {
@@ -248,22 +261,29 @@ oldExclusions = [...excluded];
                 if (checked) {
                     selected.add(check.value);
                     excluded.forEach(source => {
-                        if (belongs(source, branch)) { excluded.delete(source); }
+                        if (belongs(source, branch)) {
+                            excluded.delete(source);
+                        }
                     });
                 } else {
                     selected.forEach(source => {
-                        if (belongs(source, branch)) { selected.delete(source); }
+                        if (belongs(source, branch)) {
+                            selected.delete(source);
+                        }
                     });
-                    if (belongs(check.value, selected)) { excluded.add(check.value); }
+                    if (belongs(check.value, selected)) {
+                        excluded.add(check.value);
+                    }
                 }
             });
         },
         clear: () => changeSelection(() => {
- selected.clear(); excluded.clear();
-}),
+            selected.clear();
+            excluded.clear();
+        }),
         selectAll: () => run(async() => {
-            const old = [...selected],
-oldExcluded = [...excluded];
+            const old = [...selected];
+            const oldExcluded = [...excluded];
             try {
                 const response = !query && listingSources ? {sources: listingSources}
                     : await request(scope, {action: 'selectall', path, query, draftid: options()?.itemid || 0});
@@ -271,7 +291,9 @@ oldExcluded = [...excluded];
                     selected.add(source);
                     parents.set(source, path);
                 });
-                if (selected.size > 500) { throw new Error(root.dataset.limit); }
+                if (selected.size > 500) {
+                    throw new Error(root.dataset.limit);
+                }
                 excluded.clear();
                 await inspect();
             } catch (error) {
@@ -344,7 +366,9 @@ oldExcluded = [...excluded];
             if (check.matches(Selectors.reviewGroup)) {
                 const path = check.closest(Selectors.reviewNode).dataset.path || '/';
                 reviewChecks.forEach((_state, key) => {
-                    if ((reviewPaths.get(key) || key.slice(7)).startsWith(path)) { reviewChecks.delete(key); }
+                    if ((reviewPaths.get(key) || key.slice(7)).startsWith(path)) {
+                        reviewChecks.delete(key);
+                    }
                 });
             }
             reviewChecks.set(check.value, check.checked);
