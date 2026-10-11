@@ -13,14 +13,35 @@ export const options = () => window.parent.M?.core_filepicker?.active_filepicker
 /** @param {HTMLElement} root Embedded chooser. */
 export const mount = (root) => {
     document.body.classList.add('multipicker-embedded');
-    const host = window.frameElement?.closest('.file-picker');
+    const parent = window.parent;
+    const object = window.frameElement;
+    const host = object?.closest('.file-picker');
     if (host) {
+        // Only the connected embedded chooser owns this presentation marker.
+        object.multipickerPresentationCleanup?.();
         host.classList.add('multipicker-native-host');
-        const background = window.parent.getComputedStyle(host).backgroundColor;
+        const background = parent.getComputedStyle(host).backgroundColor;
         if (background !== 'rgba(0, 0, 0, 0)') {
             root.style.setProperty('--multipicker-background', background);
             document.body.style.setProperty('--multipicker-background', background);
         }
-        window.addEventListener('pagehide', () => host.classList.remove('multipicker-native-host'), {once: true});
+        // Keep cleanup in the parent realm, which survives replacement of the embedded document.
+        const observer = new parent.MutationObserver(() => {
+            if (!object.isConnected) {
+                release();
+            }
+        });
+        const release = () => {
+            observer.disconnect();
+            host.classList.remove('multipicker-native-host');
+            delete object.multipickerPresentationCleanup;
+        };
+        object.multipickerPresentationCleanup = release;
+        observer.observe(object.parentElement, {childList: true});
+        window.addEventListener('pagehide', () => {
+            if (!object.isConnected) {
+                release();
+            }
+        }, {once: true});
     }
 };

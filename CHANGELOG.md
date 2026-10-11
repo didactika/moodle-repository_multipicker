@@ -7,3 +7,4 @@
 - Shared recursive selection, native limits, folder preservation and copy or alias imports.
 - Reusable browsing scopes with one-time approval identifiers and atomic draft copies.
 - Fixed translated repository name and the provided plugin icon.
+- Scope the enlarged chooser and hidden native toolbar to the active MultiPicker tab, restoring native presentation on repository changes.

@@ -11,6 +11,9 @@
     /* Native YUI applies an inline height; retain a stable chooser viewport. */
     /* stylelint-disable-next-line declaration-no-important, csstree/validator */
     height: min(76vh, 48rem) !important;
+    /* Embedded controls replace the native navbar's height allowance on newer cores. */
+    /* stylelint-disable-next-line declaration-no-important */
+    max-height: none !important;
 }
 .multipicker-native-host .fp-object-container {
     height: 100%;

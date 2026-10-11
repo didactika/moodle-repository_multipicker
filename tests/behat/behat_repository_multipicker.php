@@ -30,6 +30,70 @@ require_once(__DIR__ . '/../../../../lib/behat/behat_base.php');
  */
 class behat_repository_multipicker extends behat_base {
     /**
+     * Native repository changes restore the header and size before reopening the embedded chooser.
+     * @Then /^standalone presentation should follow the active native repository$/
+     */
+    public function native_repository_presentation(): void {
+        $driver = $this->getSession()->getDriver();
+        $driver->executeScript(
+            'window.nativePresentationHost=document.querySelector(".fp-object-container").closest(".file-picker");'
+        );
+        $expanded = $driver->evaluateScript(
+            'window.nativePresentationHost.querySelector(".fp-content").getBoundingClientRect().height'
+        );
+        for ($cycle = 0; $cycle < 2; $cycle++) {
+            $driver->executeScript(
+                '[...document.querySelectorAll(".fp-repo-name")].find(node=>node.textContent.trim()==="Server files")'
+                    . '.closest("a").click();'
+            );
+            if (
+                !$this->getSession()->wait(
+                    10000,
+                    'window.nativePresentationHost.querySelector(".fp-repo.active .fp-repo-name")'
+                        . '?.textContent.trim()==="Server files"'
+                        . '&&getComputedStyle(window.nativePresentationHost.querySelector(".fp-navbar")).display!=="none"'
+                        . '&&!window.nativePresentationHost.querySelector(".fp-object-container")'
+                        . '&&!document.querySelector(".filebank-native-host,.multipicker-native-host")'
+                )
+            ) {
+                $state = $driver->evaluateScript(
+                    'JSON.stringify({host:window.nativePresentationHost.className,'
+                        . 'navbar:getComputedStyle(window.nativePresentationHost.querySelector(".fp-navbar")).display,'
+                        . 'objects:window.nativePresentationHost.querySelectorAll(".fp-object-container").length})'
+                );
+                throw new Exception('Switching repository did not restore the native header: ' . $state);
+            }
+            $height = $driver->evaluateScript(
+                'window.nativePresentationHost.querySelector(".fp-content").getBoundingClientRect().height'
+            );
+            if (abs($height - $expanded) < 1 || ($cycle && abs($height - $normal) > 1)) {
+                throw new Exception('Switching repository did not restore a stable native content height: '
+                    . json_encode(['expanded' => $expanded, 'native' => $height, 'previous' => $normal ?? null]));
+            }
+            $normal = $height;
+            $driver->executeScript(
+                '[...document.querySelectorAll(".fp-repo-name")].find(node=>node.textContent.trim()==='
+                    . json_encode('Server files MultiPicker') . ').closest("a").click();'
+            );
+            if (
+                !$this->getSession()->wait(
+                    10000,
+                    '!!document.querySelector(".fp-object-container")?.contentDocument?.querySelector("[data-multipicker-card]")'
+                        . '&&getComputedStyle(window.nativePresentationHost.querySelector(".fp-navbar")).display==="none"'
+                )
+            ) {
+                throw new Exception('Reopening the repository did not restore the embedded chooser presentation.');
+            }
+            $height = $driver->evaluateScript(
+                'window.nativePresentationHost.querySelector(".fp-content").getBoundingClientRect().height'
+            );
+            if (abs($height - $expanded) > 1) {
+                throw new Exception('Reopening the repository changed its expanded height.');
+            }
+        }
+    }
+
+    /**
      * Create readable sources, an existing destination and the repository instance.
      *
      * @Given /^standalone MultiPicker test materials exist$/
