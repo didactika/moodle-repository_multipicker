@@ -413,6 +413,119 @@ class behat_repository_multipicker extends behat_base {
     }
 
     /**
+     * Closed review folders load their file rows only when opened; delete acts on one row.
+     * @Then /^standalone review loads branches on demand and deletes individual files$/
+     */
+    public function lazy_review_removal(): void {
+        $driver = $this->getSession()->getDriver();
+        $valid = $driver->evaluateScript(
+            '(()=>{const doc=document.querySelector(".fp-object-container").contentDocument;'
+                . 'return [...doc.querySelectorAll("[data-multipicker-reviewchildren]")]'
+                . '.every(node=>node.hidden&&!node.children.length)'
+                . '&&doc.querySelectorAll("[data-multipicker-reviewcheck]").length===2;})()'
+        );
+        if (!$valid) {
+            throw new Exception('Review eagerly rendered closed directory contents.');
+        }
+        $driver->executeScript(
+            'const doc=document.querySelector(".fp-object-container").contentDocument;'
+                . '[...doc.querySelectorAll("[data-multipicker-reviewnode]")].find(node=>'
+                . 'node.querySelector("strong").textContent==="first.txt").querySelector("[data-multipicker-delete]").click();'
+        );
+        $this->wait_selection_count(1);
+        $driver->executeScript(
+            'document.querySelector(".fp-object-container").contentDocument'
+                . '.querySelector("[data-multipicker-reviewtoggle]").click();'
+        );
+        if (
+            !$this->getSession()->wait(
+                10000,
+                '(()=>{const doc=document.querySelector(".fp-object-container").contentDocument;'
+                    . 'return [...doc.querySelectorAll("[data-multipicker-reviewnode] strong")].some(node=>'
+                    . 'node.textContent==="second.txt")'
+                    . '&&!doc.querySelector("[aria-busy=true]");})()'
+            )
+        ) {
+            throw new Exception('Opening a review folder did not load its actual files.');
+        }
+        $driver->executeScript(
+            'const doc=document.querySelector(".fp-object-container").contentDocument;'
+                . '[...doc.querySelectorAll("[data-multipicker-reviewnode]")].find(node=>'
+                . 'node.querySelector("strong").textContent==="second.txt").querySelector("[data-multipicker-delete]").click();'
+        );
+        $this->wait_selection_count(0);
+        $valid = $driver->evaluateScript(
+            '(()=>{const doc=document.querySelector(".fp-object-container").contentDocument;'
+                . 'return doc.querySelector("[data-multipicker-import]").disabled'
+                . '&&doc.querySelector("[data-multipicker-error]").hidden;})()'
+        );
+        if (!$valid) {
+            throw new Exception('Removing the last reviewed file did not leave a clean empty selection.');
+        }
+    }
+
+    /**
+     * Create a real long filename, preserving the ordinary fixture paths.
+     * @Given /^standalone source has a long filename$/
+     */
+    public function create_long_name(): void {
+        global $DB;
+        $folder = $DB->get_record('folder', ['name' => 'Source files'], '*', MUST_EXIST);
+        $cm = get_coursemodule_from_instance('folder', $folder->id, $folder->course, false, MUST_EXIST);
+        get_file_storage()->create_file_from_string(['contextid' => context_module::instance($cm->id)->id,
+            'component' => 'mod_folder', 'filearea' => 'content', 'itemid' => 0, 'filepath' => '/',
+            'filename' => str_repeat('Long filename ', 16) . '.txt'], 'Long file');
+    }
+
+    /**
+     * Compare actual theme line metrics and verify full source location and title text.
+     * @Then /^standalone long names occupy at most two lines in every view$/
+     */
+    public function long_name_layouts(): void {
+        $driver = $this->getSession()->getDriver();
+        $driver->executeScript(
+            'const doc=document.querySelector(".fp-object-container").contentDocument;'
+                . '[...doc.querySelectorAll("[data-multipicker-card]")].find(node=>'
+                . 'node.querySelector(".multipicker-name").textContent.trim().startsWith("Source files"))'
+                . '.querySelector("[data-multipicker-open]").click();'
+        );
+        if (
+            !$this->getSession()->wait(
+                10000,
+                '[...document.querySelector(".fp-object-container").contentDocument.querySelectorAll(".multipicker-name")]'
+                    . '.some(node=>node.textContent.length>200)'
+            )
+        ) {
+            throw new Exception('The source directory did not list its long filename.');
+        }
+        foreach (['cards', 'list', 'tree'] as $view) {
+            $driver->executeScript(
+                'document.querySelector(".fp-object-container").contentDocument.querySelector('
+                    . json_encode('[data-multipicker-layout="' . $view . '"]') . ').click();'
+            );
+            $valid = $driver->evaluateScript(
+                '(()=>{const doc=document.querySelector(".fp-object-container").contentDocument,'
+                    . 'name=[...doc.querySelectorAll(".multipicker-name")].find(node=>node.textContent.length>200),'
+                    . 'location=doc.querySelector("[data-multipicker-location]");'
+                    . 'return name.getBoundingClientRect().height<=parseFloat(getComputedStyle(name).lineHeight)*2+1'
+                    . '&&name.title===name.textContent&&location.textContent.includes(" / ")'
+                    . '&&location.title===location.textContent;})()'
+            );
+            if (!$valid) {
+                $detail = $driver->evaluateScript(
+                    '(()=>{const doc=document.querySelector(".fp-object-container").contentDocument,'
+                        . 'name=[...doc.querySelectorAll(".multipicker-name")].find(node=>node.textContent.length>200),'
+                        . 'location=doc.querySelector("[data-multipicker-location]"),css=getComputedStyle(name);'
+                        . 'return JSON.stringify({height:name.getBoundingClientRect().height,line:css.lineHeight,'
+                        . 'max:css.maxHeight,title:name.title===name.textContent,location:location.textContent,'
+                        . 'locationtitle:location.title});})()'
+                );
+                throw new Exception('Long filename or source location is incorrect in ' . $view . ' view: ' . $detail);
+            }
+        }
+    }
+
+    /**
      * Select the alias mode offered by the actual native control.
      * @When /^I choose standalone file aliases$/
      */

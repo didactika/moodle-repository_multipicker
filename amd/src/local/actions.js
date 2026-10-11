@@ -20,6 +20,7 @@ export const createActions = (root) => {
     const selected = new Set();
     const excluded = new Set();
     const parents = new Map();
+    let listingSources;
     let folderCounts = {};
     const reviewChecks = new Map();
     const reviewPaths = new Map();
@@ -136,6 +137,7 @@ pendingSearch = false;
             pendingSearch = true;
             return;
         }
+        listingSources = response.sources;
         results.innerHTML = response.html;
         registerChildren(results, path);
         parent = response.parent || '';
@@ -263,8 +265,8 @@ oldExclusions = [...excluded];
             const old = [...selected],
 oldExcluded = [...excluded];
             try {
-                const response = await request(scope, {action: 'selectall', path, query,
-                    draftid: options()?.itemid || 0});
+                const response = !query && listingSources ? {sources: listingSources}
+                    : await request(scope, {action: 'selectall', path, query, draftid: options()?.itemid || 0});
                 (response.sources || []).forEach(source => {
                     selected.add(source);
                     parents.set(source, path);

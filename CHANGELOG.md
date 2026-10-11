@@ -12,3 +12,8 @@
 - Retain source-relative paths for individual files and count overlapping selections once in directory badges.
 - Match FileBank card footers, compact list navigation, native Back controls and leading tree expanders.
 - Restore native presentation through a parent-loaded lifecycle adapter that survives Chrome document replacement.
+
+- Reuse native listing keys for Select all and a short-lived display snapshot for inspection/review; revalidate the complete selection before approval and copying.
+- Render collapsed review branches on demand, page direct children and support individual file/folder removal with unloaded descendant exceptions.
+- Bound long destination paths before native storage writes with stable abbreviated folder names, preserving file content and source metadata.
+- Show the full native source route, enforce two-line titles in every layout and remove native icon margins from compact delete controls.

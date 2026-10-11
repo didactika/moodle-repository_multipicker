@@ -43,21 +43,21 @@ final class destination_path {
         $parts = array_values(array_filter(explode('/', trim($relative, '/')), 'strlen'));
         $path = $base;
         $original = '';
-        foreach ($parts as $index => $part) {
+        foreach ($parts as $part) {
             $original .= '/' . $part;
             $name = clean_param($part, PARAM_FILE);
-            if (\core_text::strlen($name) > 64) {
-                $name = \core_text::substr($name, 0, 51) . '-' . substr(hash('sha256', $original), 0, 12);
+            $available = 255 - \core_text::strlen($path) - 1;
+            if ($available < 16) {
+                throw new \moodle_exception('pathlimit', 'repository_multipicker');
             }
-            $remaining = implode('/', array_slice($parts, $index));
-            $reserve = $index < count($parts) - 1 ? 34 : 0;
-            if (\core_text::strlen($path . $name . '/') + $reserve > 255) {
-                $available = 255 - \core_text::strlen($path) - 1;
-                if ($available < 16) {
-                    throw new \moodle_exception('pathlimit', 'repository_multipicker');
-                }
-                $path .= \core_text::substr('Folders-' . hash('sha256', $original . '/' . $remaining), 0, $available) . '/';
+            if ($available <= 32) {
+                $path .= \core_text::substr('Folders-' . hash('sha256', implode('/', $parts)), 0, $available) . '/';
                 return $path;
+            }
+            // Prefix decisions depend only on their ancestors, so parent and child files share the same mapped root.
+            $maximum = min(64, intdiv($available, 2) - 1);
+            if (\core_text::strlen($name) > $maximum) {
+                $name = \core_text::substr($name, 0, $maximum - 13) . '-' . substr(hash('sha256', $original), 0, 12);
             }
             $path .= $name . '/';
         }

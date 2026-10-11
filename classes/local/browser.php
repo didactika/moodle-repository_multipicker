@@ -105,6 +105,8 @@ class browser {
             $current = array_pop($ancestors);
             $parent = array_pop($ancestors);
             return ['cards' => $cards, 'path' => $path, 'page' => max(0, $page),
+                'selection' => !$search && count($nodes) <= 500
+                    ? array_map(static fn($child) => $child['path'] ?? $child['source'], $nodes) : null,
                 'previous' => $page > 0, 'next' => $search ? !empty($listing['pages']) : count($nodes) > ($page + 1) * 30,
                 'parent' => $parent['path'] ?? '', 'location' => implode(' / ', array_column($listing['path'] ?? [], 'name'))];
         }
