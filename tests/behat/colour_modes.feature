@@ -19,9 +19,11 @@ Feature: Follow the owning Boost colour mode in standalone MultiPicker
     When I switch the standalone MultiPicker owning theme to "light"
     And I switch the standalone MultiPicker owning theme to "auto"
     And I switch the standalone MultiPicker owning theme to "dark"
+    And I capture the standalone MultiPicker theme
     And I select the standalone source directory contents
     And I review standalone MultiPicker files
     Then the standalone MultiPicker picker should inherit its native theme
+    And I capture the standalone MultiPicker theme
     And I import standalone MultiPicker files
     And I press "Save changes"
     Then I should see "first.txt"

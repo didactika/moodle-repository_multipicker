@@ -12,7 +12,7 @@
 const legacyTokens = new Set(['--primary', '--secondary', '--success', '--info', '--warning', '--danger', '--light', '--dark']);
 
 /**
- * Older Bootstrap versions expose palette tokens but no body background token.
+ * Match the actual picker surface, which can differ from the page body token.
  * Read the native painted surface instead of supplying a plugin colour.
  * @param {HTMLElement} surface Native picker content.
  * @returns {String} Active theme's background.
@@ -55,14 +55,10 @@ export const observe = (object, surface) => {
                 current.add(name);
             }
         }
-        if (!current.has('--bs-body-bg')) {
-            target.style.setProperty('--bs-body-bg', nativeBackground(surface));
-            current.add('--bs-body-bg');
-        }
-        if (!current.has('--bs-body-color')) {
-            target.style.setProperty('--bs-body-color', styles.color);
-            current.add('--bs-body-color');
-        }
+        target.style.setProperty('--bs-body-bg', nativeBackground(surface));
+        target.style.setProperty('--bs-body-color', styles.color);
+        current.add('--bs-body-bg');
+        current.add('--bs-body-color');
         copied.forEach(name => {
             if (!current.has(name)) {
                 target.style.removeProperty(name);
@@ -72,8 +68,9 @@ export const observe = (object, surface) => {
     };
     const observer = new MutationObserver(refresh);
     const options = {attributes: true, attributeFilter: ['data-bs-theme', 'class', 'style']};
-    observer.observe(source, options);
-    observer.observe(surface.ownerDocument.body, options);
+    for (let element = surface; element; element = element.parentElement) {
+        observer.observe(element, options);
+    }
     refresh();
     return () => observer.disconnect();
 };

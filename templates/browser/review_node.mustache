@@ -9,12 +9,12 @@
 <li data-multipicker-reviewnode data-path="{{path}}">
     <div class="d-flex align-items-center py-2 border-bottom" data-multipicker-reviewrow>
         <input type="checkbox" class="me-2" value="{{source}}" data-multipicker-reviewcheck aria-label="{{name}}" {{#folder}}data-multipicker-reviewgroup{{/folder}}>
-        {{#folder}}<button type="button" class="btn btn-sm btn-link px-1 me-1" data-multipicker-reviewtoggle aria-expanded="false" aria-label="{{#str}}open, repository_multipicker{{/str}}">{{#pix}}t/collapsed, core{{/pix}}</button>{{#pix}}f/folder, core{{/pix}}{{/folder}}
-        {{^folder}}{{#pix}}f/document, core{{/pix}}{{/folder}}
+        {{#folder}}<button type="button" class="btn btn-sm btn-link px-1 me-1" data-multipicker-reviewtoggle aria-expanded="false" aria-label="{{#str}}open, repository_multipicker{{/str}}">{{#pix}}t/collapsed, core{{/pix}}</button>{{#pix}}i/folder, core{{/pix}}{{/folder}}
+        {{^folder}}{{#pix}}i/files, core{{/pix}}{{/folder}}
         <strong class="small multipicker-reviewname ms-1" title="{{name}}">{{name}}</strong>
         <span class="badge text-bg-primary multipicker-chip ms-auto">{{#folder}}{{count}}{{/folder}}{{^folder}}{{#aliases}}{{#str}}reference, repository_multipicker{{/str}}{{/aliases}}{{^aliases}}{{#str}}copy, repository_multipicker{{/str}}{{/aliases}}{{/folder}}</span>
         <button type="button" class="btn btn-sm btn-link text-danger ms-1" data-multipicker-delete="{{source}}" title="{{#str}}remove, repository_multipicker{{/str}}" aria-label="{{#str}}remove, repository_multipicker{{/str}}">{{#pix}}t/delete, core{{/pix}}</button>
     </div>
-    {{#folder}}<div class="ms-3 ps-2 border-left" data-multipicker-reviewchildren hidden></div>{{/folder}}
+    {{#folder}}<div class="ms-3 ps-2 border-start" data-multipicker-reviewchildren hidden></div>{{/folder}}
 </li>
 {{#standalone}}</ul>{{/standalone}}

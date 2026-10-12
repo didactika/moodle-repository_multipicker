@@ -247,12 +247,7 @@ jobs:
       - name: Behat features
         id: behat
         if: ${{ !cancelled() }}
-        # Example (delete if it does not apply to your plugin): if your SCSS
-        # still uses Bootstrap-4-era utility classes (mr-*, badge-*,
-        # text-right, ...) that Moodle 5.x renders through its Bootstrap 5
-        # compat shim but reports as deprecated, you may need to omit
-        # --scss-deprecations here until you migrate to Bootstrap 5 classes.
-        run: moodle-plugin-ci behat --profile chrome
+        run: moodle-plugin-ci behat --profile chrome --scss-deprecations
 
       - name: Upload Behat Faildump
         if: ${{ failure() && steps.behat.outcome == 'failure' }}
