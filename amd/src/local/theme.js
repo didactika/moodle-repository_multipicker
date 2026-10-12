@@ -36,7 +36,7 @@ const nativeBackground = surface => {
 export const observe = (object, surface) => {
     const target = object.contentDocument?.documentElement;
     if (!target) {
-        return () => {};
+        return () => undefined;
     }
     const source = surface.ownerDocument.documentElement;
     let copied = new Set();

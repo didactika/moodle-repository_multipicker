@@ -49,7 +49,7 @@ final class browser_test extends \advanced_testcase {
             $fs->create_file_from_string(
                 ['contextid' => $context->id, 'component' => 'mod_folder',
                     'filearea' => 'content', 'itemid' => 0, 'filepath' => '/nested/', 'filename' => $name,
-                    'author' => 'Source author', 'license' => 'cc'],
+                    'author' => 'Source author', 'license' => 'cc', 'source' => 'Unserialized source metadata'],
                 $content
             );
         }
@@ -100,6 +100,33 @@ final class browser_test extends \advanced_testcase {
         $this->assertNotEmpty(browser::listing(browser::scope('test'), $source, 0)['cards']);
         $this->expectException(\moodle_exception::class);
         browser::apply('test', ['itemid' => $scope['draftid']], -1, -1);
+    }
+
+    /**
+     * Native Folder saving accepts copied drafts with ordinary source metadata.
+     */
+    public function test_imported_files_can_be_saved_by_the_native_folder_editor(): void {
+        global $CFG, $SESSION;
+        [$scope, $source] = $this->fixture();
+        $operations = browser::review($scope, [$source], 2, '/');
+        $SESSION->repository_multipicker['test'] += ['sources' => [$source], 'approval' => $operations,
+            'maxfiles' => 2, 'basepath' => '/'];
+        browser::apply('test', ['itemid' => $scope['draftid']], -1, -1);
+
+        require_once($CFG->libdir . '/filelib.php');
+        file_save_draft_area_files(
+            $scope['draftid'],
+            $scope['contextid'],
+            'mod_folder',
+            'content',
+            7,
+            ['subdirs' => true, 'maxfiles' => -1, 'maxbytes' => -1]
+        );
+        $saved = get_file_storage()->get_area_files($scope['contextid'], 'mod_folder', 'content', 7, 'filename', false);
+        $this->assertCount(2, $saved);
+        foreach ($saved as $file) {
+            $this->assertSame('Unserialized source metadata', $file->get_source());
+        }
     }
 
     /**
@@ -240,6 +267,10 @@ final class browser_test extends \advanced_testcase {
             $this->assertSame('Source author', $file->get_author());
             $this->assertSame('cc', $file->get_license());
             $this->assertSame($scope['repositoryid'], (int)$file->get_repository_id());
+            $this->assertSame(
+                'Unserialized source metadata',
+                unserialize($file->get_source(), ['allowed_classes' => [\stdClass::class]])->source
+            );
         }
     }
 }

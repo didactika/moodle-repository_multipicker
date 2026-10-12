@@ -1,5 +1,10 @@
 # Changelog
 
+## [4.0.1] - 2026-10-13
+
+- Write native draft source metadata for copied files and aliases so Moodle can save large Folder imports containing ordinary source text.
+- Cover the complete repository import and native Folder save in regression tests.
+
 ## [4.0.0] - 2026-10-11
 
 - Preserve the owner-selected `.400` minimum-Moodle suffix in plugin version metadata and release packages.
