@@ -1,0 +1,11 @@
+{
+  "extends": "../../../tsconfig.json",
+  "compilerOptions": {
+    "strict": true,
+    "noEmit": true
+  },
+  "include": [
+    "js/esm/src/**/*.ts",
+    "../../../@types/**/*.d.ts"
+  ]
+}

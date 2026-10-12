@@ -1,0 +1,229 @@
+/* Core versions use different decimal styles; keep leading zeros across maintenance lines. */
+/* stylelint-disable number-leading-zero */
+/* @copyright 2026 Didactika.org
+ * @author Hector Arrechea <hectorlazaroarrechea@gmail.com>
+ * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+.multipicker-native-host .fp-navbar {
+    display: none;
+}
+.multipicker-native-host .fp-content {
+    /* Native YUI applies an inline height; retain a stable chooser viewport. */
+    /* stylelint-disable-next-line declaration-no-important, csstree/validator */
+    height: min(72vh, 48rem) !important;
+    /* Embedded controls replace the native navbar's height allowance on newer cores. */
+    /* stylelint-disable-next-line declaration-no-important */
+    max-height: none !important;
+}
+.multipicker-native-host .fp-object-container {
+    height: 100%;
+    width: 100%;
+    border: 0;
+}
+body.multipicker-embedded,
+.multipicker-embedded #page,
+.multipicker-embedded #page-content,
+.multipicker-embedded #region-main {
+    background: var(--multipicker-background, #fff);
+}
+.multipicker-embedded {
+    overflow: hidden;
+}
+.multipicker-embedded #page {
+    padding: 0;
+}
+.multipicker-browser {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 0.5rem);
+    min-height: 0;
+    background: var(--multipicker-background, #fff);
+}
+.multipicker-browser > * {
+    flex-shrink: 0;
+}
+.multipicker-browser .multipicker-results {
+    flex: 1 1 auto;
+    min-height: 5rem;
+    overflow: auto;
+    padding: 0.2rem;
+}
+.multipicker-copy-options {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.6rem;
+}
+.multipicker-items {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+    align-items: start;
+}
+.multipicker-node {
+    min-width: 0;
+}
+.multipicker-browser [data-multipicker-card] {
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: border-color 0.15s, background-color 0.15s;
+}
+.multipicker-browser .card-body {
+    gap: 0.5rem;
+}
+.multipicker-browser [data-multipicker-check] {
+    width: 1.1rem;
+    height: 1.1rem;
+    margin-top: 0.3rem;
+    flex-shrink: 0;
+}
+.multipicker-card-content {
+    display: grid;
+    grid-template-rows: 1.5rem 2.6rem auto;
+    min-width: 0;
+    flex: 1;
+}
+.multipicker-card-tools {
+    gap: 0.4rem;
+}
+.multipicker-card-tools .icon {
+    width: 1.1rem;
+    height: 1.1rem;
+    margin: 0;
+}
+.multipicker-browser .multipicker-name {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    height: 2.6em;
+    max-height: 2.6em;
+    line-height: 1.3;
+    font-size: 0.9rem;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+.multipicker-browser .multipicker-meta {
+    min-height: 2rem;
+    overflow-wrap: anywhere;
+    font-size: 0.7rem;
+    gap: 0.35rem;
+    align-content: start;
+}
+.multipicker-chip {
+    display: inline-block;
+    border-radius: 1rem;
+    padding: 0.15rem 0.5rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--bs-primary, #0f6cbf);
+    background: #e2edf7;
+}
+.multipicker-browser [data-multipicker-card].border-primary,
+.multipicker-browser [data-multipicker-card]:hover {
+    background: var(--bs-primary-bg-subtle, #eef6ff);
+    border-color: var(--bs-primary, #0f6cbf);
+}
+.multipicker-browser [data-multipicker-card]:focus-within {
+    border-color: var(--bs-primary, #0f6cbf);
+}
+.multipicker-browser .multipicker-open {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.8rem;
+    min-width: 1.8rem;
+    height: 1.8rem;
+    padding: 0;
+    border: 0;
+    border-radius: 0.5rem;
+    line-height: 1;
+    flex-shrink: 0;
+    background: #e2edf7;
+    color: var(--bs-primary, #0f6cbf);
+}
+.multipicker-browser .multipicker-open:hover {
+    background: #cbdfee;
+}
+.multipicker-browser .multipicker-open:focus-visible {
+    outline: 2px solid var(--bs-primary, #0f6cbf);
+    outline-offset: 2px;
+}
+.multipicker-browser .multipicker-open .icon,
+.multipicker-back .icon,
+.multipicker-browser .btn-group .icon {
+    margin: 0;
+}
+.multipicker-browser .multipicker-open .icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 0.85rem;
+    height: 0.85rem;
+    font-size: 0.85rem;
+    line-height: 1;
+}
+.multipicker-browser[data-layout="cards"] .multipicker-children,
+.multipicker-browser[data-layout="list"] .multipicker-children {
+    display: none;
+}
+.multipicker-browser[data-layout="list"] .multipicker-items,
+.multipicker-browser[data-layout="tree"] .multipicker-items {
+    display: block;
+}
+.multipicker-browser[data-layout="list"] .multipicker-node,
+.multipicker-browser[data-layout="tree"] .multipicker-node {
+    margin-bottom: 0.4rem;
+}
+.multipicker-open-tree {
+    display: none;
+}
+.multipicker-browser[data-layout="tree"] .multipicker-open {
+    order: -1;
+}
+.multipicker-browser[data-layout="tree"] .multipicker-open-navigation {
+    display: none;
+}
+.multipicker-browser[data-layout="tree"] .multipicker-open-tree {
+    display: inline-flex;
+}
+.multipicker-browser[data-layout="tree"] .multipicker-open[aria-expanded="true"] .multipicker-open-tree {
+    transform: rotate(90deg);
+}
+.multipicker-browser[data-layout="tree"] .card {
+    border-color: transparent;
+}
+.multipicker-browser[data-layout="tree"] .multipicker-card-content {
+    grid-template-rows: auto auto auto;
+}
+.multipicker-browser[data-layout="tree"] .multipicker-name {
+    height: auto;
+}
+.multipicker-browser [aria-busy="true"] {
+    opacity: 0.55;
+    pointer-events: none;
+}
+.multipicker-footer {
+    background: var(--multipicker-background, #fff);
+}
+
+@media (max-width: 500px) {
+    .multipicker-copy-options,
+    .multipicker-items {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+.multipicker-reviewname {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.multipicker-browser [data-multipicker-remove] .icon,
+.multipicker-browser [data-multipicker-delete] .icon,
+.multipicker-browser [data-multipicker-reviewtoggle] .icon {
+    margin: 0;
+}
+.multipicker-browser [data-multipicker-reviewtoggle][aria-expanded="true"] .icon {
+    transform: rotate(90deg);
+}

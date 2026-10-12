@@ -1,0 +1,11 @@
+{
+  "name": "didactika/moodle-repository_multipicker",
+  "type": "moodle-repository",
+  "license": "GPL-3.0-or-later",
+  "require": {
+    "php": ">=8.3"
+  },
+  "require-dev": {
+    "moodlehq/moodle-cs": "^3.7"
+  }
+}

@@ -1,5 +1,5 @@
 <?php
-// This file is part of Moodle - http://moodle.org/
+// This file is part of Moodle - https://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -12,20 +12,20 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Language strings for PLUGINTYPE_PLUGINNAME
+ * Repository use permission.
  *
- * VERIFY: rename this file to match $plugin->component from version.php
- * (e.g. lang/en/local_servicemanager.php), and fill in @author.
- *
- * @package    PLUGINTYPE_PLUGINNAME
- * @copyright  YEAR YOUR ORGANISATION
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package repository_multipicker
+ * @copyright 2026 Didactika.org
+ * @author Hector Arrechea <hectorlazaroarrechea@gmail.com>
+ * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
 defined('MOODLE_INTERNAL') || die();
-
-// Mandatory: moodle-plugin-ci validate fails without a pluginname string.
-$string['pluginname'] = 'PLUGINTYPE_PLUGINNAME'; // VERIFY: replace before first commit.
+$capabilities = [
+    'repository/multipicker:view' => [
+        'captype' => 'read', 'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes' => ['editingteacher' => CAP_ALLOW, 'manager' => CAP_ALLOW],
+    ],
+];
