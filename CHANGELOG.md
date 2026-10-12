@@ -2,6 +2,7 @@
 
 ## [4.0.0] - 2026-10-11
 
+- Preserve the owner-selected `.400` minimum-Moodle suffix in plugin version metadata and release packages.
 - Initial public Server files MultiPicker distribution for Moodle 4.0–5.2.
 - Native Server files navigation and search with cards, list and lazy tree views.
 - Shared recursive selection, native limits, folder preservation and copy or alias imports.
@@ -24,3 +25,4 @@
 - Install the initial public schema without obsolete upgrade callbacks.
 - Preserve the CI archive suffix behind the command link and fail warning-only Mustache validation instead of accepting skipped child checks.
 - Follow native theme colours and Bootstrap components; synchronize owning colour modes and runtime tokens across embedded picker documents.
+- Use mapped Moodle folder/file icons for native dark-mode contrast and match the painted modal surface instead of the page body background.

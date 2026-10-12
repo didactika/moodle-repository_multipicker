@@ -42,12 +42,21 @@ class behat_repository_multipicker_theme extends behat_repository_multipicker_ba
             . 'const host=document.querySelector(".file-picker .fp-content"),styles=getComputedStyle(host);'
             . 'if(doc.documentElement.style.getPropertyValue("--bs-primary")'
             . '!==styles.getPropertyValue("--bs-primary")){return false;}'
-            . 'if(!styles.getPropertyValue("--bs-body-bg")){return true;}'
-            . 'const probe=document.createElement("span");probe.style.backgroundColor="var(--bs-body-bg)";'
-            . 'host.append(probe);const expected=getComputedStyle(probe).backgroundColor;probe.remove();'
-            . 'return doc.defaultView.getComputedStyle(doc.body).backgroundColor===expected;})()';
+            . 'let expected="";for(let element=host;element;element=element.parentElement){'
+            . 'const colour=getComputedStyle(element).backgroundColor;'
+            . 'if(colour!=="transparent"&&colour!=="rgba(0, 0, 0, 0)"){expected=colour;break;}}'
+            . 'if(doc.defaultView.getComputedStyle(doc.body).backgroundColor!==expected){return false;}'
+            . 'if(Array.from(doc.querySelectorAll("*")).some(element=>'
+            . 'doc.defaultView.getComputedStyle(element,":before").content'
+            . '.startsWith("\"Deprecated style in use"))){return false;}'
+            . 'const icons=Array.from(doc.querySelectorAll(".fa-folder.icon,.fa-file.icon"));'
+            . 'return icons.length>0&&icons.every(icon=>{const paint=doc.defaultView.getComputedStyle(icon);'
+            . 'return paint.color===doc.defaultView.getComputedStyle(icon.parentElement).color'
+            . '&&paint.color!==expected;});})()';
         if (!$this->getSession()->wait(10000, $condition)) {
-            throw new \Exception('The embedded chooser does not inherit the owning native colour mode or Bootstrap tokens.');
+            throw new \Exception(
+                'The embedded chooser does not inherit the owning modal surface, mapped icons or supported Bootstrap presentation.'
+            );
         }
     }
 
@@ -69,6 +78,39 @@ class behat_repository_multipicker_theme extends behat_repository_multipicker_ba
             . '"--bs-primary",window.previousNativePrimary);}else{document.documentElement.style.removeProperty("--bs-primary");}'
         );
         $this->assert_native_theme();
+        $driver->executeScript(
+            'const host=document.querySelector(".file-picker .fp-content"),styles=getComputedStyle(host);'
+            . 'window.previousNativeSurface=host.style.backgroundColor;'
+            . 'host.style.backgroundColor=styles.getPropertyValue("--bs-success")||styles.getPropertyValue("--success");'
+        );
+        $this->assert_native_theme();
+        $driver->executeScript(
+            'document.querySelector(".file-picker .fp-content").style.backgroundColor=window.previousNativeSurface;'
+        );
+        $this->assert_native_theme();
+    }
+
+    /**
+     * Capture the native modal after checking the embedded viewport bounds.
+     * @Then /^I capture the standalone MultiPicker theme$/
+     */
+    public function capture_theme(): void {
+        $page = $this->getSession()->getDriver()->evaluateScript(
+            'document.querySelector(".fp-object-container").contentDocument'
+            . '.querySelector(".multipicker-reviewtree")?"review":"browser"'
+        );
+        foreach (['desktop' => 1366, 'mobile' => 480] as $size => $width) {
+            $this->getSession()->resizeWindow($width, 900);
+            if (
+                !$this->getSession()->wait(3000, '(()=>{'
+                . 'const doc=document.querySelector(".fp-object-container").contentDocument;'
+                . 'return doc.documentElement.scrollWidth<=doc.documentElement.clientWidth+1;})()')
+            ) {
+                throw new \Exception('The standalone chooser overflows the viewport horizontally.');
+            }
+            file_put_contents('/tmp/multipicker-' . $page . '-' . $size . '.png', $this->getSession()->getScreenshot());
+        }
+        $this->getSession()->resizeWindow(1366, 1000);
     }
 
     /**

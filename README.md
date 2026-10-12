@@ -79,6 +79,8 @@ The chooser respects native destination limits and bounds traversal to 500 selec
 
 ## Theme colours
 
+Material folder/file icons inherit native text colours. Embedded backgrounds match the actual owning picker surface, including live theme changes.
+
 Controls and badges use the active theme's Bootstrap components. Surfaces, selection and focus use native Bootstrap tokens without a plugin palette or fixed light-colour fallback. Embedded pickers inherit the owning page's mode and runtime Bootstrap overrides, including changes while the picker remains open.
 
 This distribution retains native Moodle 4.0–5.2 theme behaviour. It does not add the experimental Moodle 5.3 mode switcher to older cores.
