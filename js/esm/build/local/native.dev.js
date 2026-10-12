@@ -8,17 +8,12 @@ var __name = (target, value) => __defProp(target, "name", { value, configurable:
  */
 const options = /* @__PURE__ */ __name(() => window.parent.M?.core_filepicker?.active_filepicker?.options, "options");
 const mount = /* @__PURE__ */ __name((root) => {
-  document.body.classList.add("multipicker-embedded");
+  root.ownerDocument.body.classList.add("multipicker-embedded");
   const parent = window.parent;
   const object = window.frameElement;
   const host = object?.closest(".file-picker");
   if (object && host) {
     parent.require(["repository_multipicker/local/picker_host"], (adapter) => adapter.mount(object));
-    const background = parent.getComputedStyle(host).backgroundColor;
-    if (background !== "rgba(0, 0, 0, 0)") {
-      root.style.setProperty("--multipicker-background", background);
-      document.body.style.setProperty("--multipicker-background", background);
-    }
   }
 }, "mount");
 export {

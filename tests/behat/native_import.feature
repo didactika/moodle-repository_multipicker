@@ -102,3 +102,12 @@ Feature: Import a standalone Server files batch into a native folder
     When I press "Edit"
     And I open standalone MultiPicker
     Then standalone long names occupy at most two lines in every view
+
+  @native_theme
+  Scenario: The standalone chooser inherits native Bootstrap tokens
+    Given standalone MultiPicker test materials exist
+    And I am on the "Destination files" "folder activity" page logged in as "spteacher"
+    When I press "Edit"
+    And I open standalone MultiPicker
+    Then the standalone MultiPicker picker should inherit its native theme
+    And the standalone MultiPicker picker should follow runtime Bootstrap changes

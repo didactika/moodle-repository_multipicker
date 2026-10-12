@@ -24,7 +24,7 @@ body.multipicker-embedded,
 .multipicker-embedded #page,
 .multipicker-embedded #page-content,
 .multipicker-embedded #region-main {
-    background: var(--multipicker-background, #fff);
+    background: var(--bs-body-bg);
 }
 .multipicker-embedded {
     overflow: hidden;
@@ -37,7 +37,7 @@ body.multipicker-embedded,
     flex-direction: column;
     height: calc(100vh - 0.5rem);
     min-height: 0;
-    background: var(--multipicker-background, #fff);
+    background: var(--bs-body-bg);
 }
 .multipicker-browser > * {
     flex-shrink: 0;
@@ -115,16 +115,14 @@ body.multipicker-embedded,
     padding: 0.15rem 0.5rem;
     font-size: 0.72rem;
     font-weight: 600;
-    color: var(--bs-primary, #0f6cbf);
-    background: #e2edf7;
 }
 .multipicker-browser [data-multipicker-card].border-primary,
 .multipicker-browser [data-multipicker-card]:hover {
-    background: var(--bs-primary-bg-subtle, #eef6ff);
-    border-color: var(--bs-primary, #0f6cbf);
+    background: var(--bs-primary-bg-subtle);
+    border-color: var(--bs-primary, var(--primary));
 }
 .multipicker-browser [data-multipicker-card]:focus-within {
-    border-color: var(--bs-primary, #0f6cbf);
+    border-color: var(--bs-primary, var(--primary));
 }
 .multipicker-browser .multipicker-open {
     display: inline-flex;
@@ -138,14 +136,9 @@ body.multipicker-embedded,
     border-radius: 0.5rem;
     line-height: 1;
     flex-shrink: 0;
-    background: #e2edf7;
-    color: var(--bs-primary, #0f6cbf);
-}
-.multipicker-browser .multipicker-open:hover {
-    background: #cbdfee;
 }
 .multipicker-browser .multipicker-open:focus-visible {
-    outline: 2px solid var(--bs-primary, #0f6cbf);
+    outline: 2px solid var(--bs-primary, var(--primary));
     outline-offset: 2px;
 }
 .multipicker-browser .multipicker-open .icon,
@@ -203,7 +196,7 @@ body.multipicker-embedded,
     pointer-events: none;
 }
 .multipicker-footer {
-    background: var(--multipicker-background, #fff);
+    background: var(--bs-body-bg);
 }
 
 @media (max-width: 500px) {

@@ -78,6 +78,12 @@ The chooser respects native destination limits and bounds traversal to 500 selec
 | A destination path conflicts | Clear that source from the selection or choose another destination directory |
 | A session expired | Reopen the repository and review the current files before importing |
 
+## Theme colours
+
+Controls and badges use the active theme's Bootstrap components. Surfaces, selection and focus use native Bootstrap tokens without a plugin palette or fixed light-colour fallback. Embedded pickers inherit the owning page's mode and runtime Bootstrap overrides, including changes while the picker remains open.
+
+Moodle 5.3 Boost colour modes are experimental and must be enabled in the theme settings. FileBank follows Light, Dark and System; it does not enable the feature or store its own mode.
+
 ## Getting help
 
 Open an [issue](https://github.com/didactika/moodle-repository_multipicker/issues) with your Moodle and PHP versions, the source activity, the destination form and the expected and actual behavior.

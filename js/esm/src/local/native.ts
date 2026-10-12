@@ -16,16 +16,11 @@ export const options = () => (window.parent as NativeWindow).M?.core_filepicker?
 
 /** @param {HTMLElement} root Embedded chooser. */
 export const mount = (root: HTMLElement): void => {
-    document.body.classList.add('multipicker-embedded');
+    root.ownerDocument.body.classList.add('multipicker-embedded');
     const parent = window.parent as Window & typeof globalThis & NativeWindow;
     const object = window.frameElement as HostObject | null;
     const host = object?.closest<HTMLElement>('.file-picker');
     if (object && host) {
         parent.require(['repository_multipicker/local/picker_host'], (adapter: {mount(object: Element): void}) => adapter.mount(object));
-        const background = parent.getComputedStyle(host).backgroundColor;
-        if (background !== 'rgba(0, 0, 0, 0)') {
-            root.style.setProperty('--multipicker-background', background);
-            document.body.style.setProperty('--multipicker-background', background);
-        }
     }
 };

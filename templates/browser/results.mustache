@@ -14,16 +14,16 @@
                 <input type="checkbox" value="{{source}}" data-multipicker-check aria-label="{{name}}">
                 <div class="multipicker-card-content">
                     <div class="multipicker-card-tools d-flex align-items-center mb-1">
-                        {{#folder}}{{#pix}}f/folder, core{{/pix}}<span class="multipicker-chip">{{#str}}folder, repository_multipicker{{/str}}</span>{{/folder}}
-                        {{^folder}}{{#pix}}f/document, core{{/pix}}<span class="multipicker-chip">{{#str}}file, repository_multipicker{{/str}}</span>{{/folder}}
+                        {{#folder}}{{#pix}}f/folder, core{{/pix}}<span class="badge text-bg-primary multipicker-chip">{{#str}}folder, repository_multipicker{{/str}}</span>{{/folder}}
+                        {{^folder}}{{#pix}}f/document, core{{/pix}}<span class="badge text-bg-primary multipicker-chip">{{#str}}file, repository_multipicker{{/str}}</span>{{/folder}}
                     </div>
                     <strong class="multipicker-name" title="{{name}}">{{name}}</strong>
                     <div class="multipicker-meta d-flex flex-wrap mt-2 pt-2 border-top">
-                        {{#folder}}<span class="multipicker-chip" data-multipicker-folder-count="{{source}}">{{#str}}folderselection, repository_multipicker, 0{{/str}}</span>{{/folder}}
+                        {{#folder}}<span class="badge text-bg-primary multipicker-chip" data-multipicker-folder-count="{{source}}">{{#str}}folderselection, repository_multipicker, 0{{/str}}</span>{{/folder}}
                         {{^folder}}<span>{{author}}{{#license}} · {{license}}{{/license}}{{#size}} · {{size}}{{/size}}</span>{{/folder}}
                     </div>
                 </div>
-                {{#folder}}<button type="button" class="btn btn-outline-secondary multipicker-open" data-multipicker-open="{{source}}" aria-expanded="false" title="{{#str}}open, repository_multipicker{{/str}}" aria-label="{{#str}}open, repository_multipicker{{/str}}"><span class="multipicker-open-navigation">{{#pix}}t/right, core{{/pix}}</span><span class="multipicker-open-tree">{{#pix}}t/collapsed, core{{/pix}}</span></button>{{/folder}}
+                {{#folder}}<button type="button" class="btn btn-outline-primary multipicker-open" data-multipicker-open="{{source}}" aria-expanded="false" title="{{#str}}open, repository_multipicker{{/str}}" aria-label="{{#str}}open, repository_multipicker{{/str}}"><span class="multipicker-open-navigation">{{#pix}}t/right, core{{/pix}}</span><span class="multipicker-open-tree">{{#pix}}t/collapsed, core{{/pix}}</span></button>{{/folder}}
             </div>
         </div>
         <div class="multipicker-children ms-3 ps-2 border-start" data-multipicker-children hidden></div>
