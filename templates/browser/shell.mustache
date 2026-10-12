@@ -1,0 +1,62 @@
+{{!
+    @template repository_multipicker/browser/shell
+    @copyright 2026 Didactika.org
+    @author Hector Arrechea <hectorlazaroarrechea@gmail.com>
+    @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+    Example context (json): {"scope":"example","name":"Server files MultiPicker","sesskey":"example"}
+}}
+
+<div class="multipicker-browser p-3" data-multipicker-root data-layout="cards" data-scope="{{scope}}" data-sesskey="{{sesskey}}" data-unavailable="{{#str}}unavailable, repository_multipicker{{/str}}" data-folderselection="{{#str}}folderselection, repository_multipicker, {$a}{{/str}}" data-limit="{{#str}}limit, repository_multipicker{{/str}}">
+    <h2 class="h5 mb-3">{{name}}</h2>
+    <div class="alert alert-danger py-2 small" data-multipicker-error role="alert" hidden></div>
+    <div class="multipicker-search mb-2" data-multipicker-filters>
+        <div class="mb-2">
+            <label class="small mb-1" for="multipicker-query">{{#str}}search, repository_multipicker{{/str}}</label> {{{searchhelp}}}
+            <div class="input-group input-group-sm">
+                <span class="input-group-text">{{#pix}}a/search, core{{/pix}}</span>
+                <input type="search" id="multipicker-query" class="form-control" data-multipicker-query autocomplete="off">
+                <button type="button" class="btn btn-outline-secondary" data-multipicker-clearsearch title="{{#str}}clearsearch, repository_multipicker{{/str}}" aria-label="{{#str}}clearsearch, repository_multipicker{{/str}}">{{#pix}}e/cancel, core{{/pix}}</button>
+            </div>
+        </div>
+        <div class="multipicker-copy-options">
+            <div>
+                <label class="small mb-1" for="multipicker-copy">{{#str}}copymode, repository_multipicker{{/str}}</label> {{{copyhelp}}}
+                <select class="form-control form-control-sm" id="multipicker-copy" data-multipicker-copymode>
+                    <option value="copy">{{#str}}copy, repository_multipicker{{/str}}</option>
+                    <option value="reference" data-multipicker-reference>{{#str}}reference, repository_multipicker{{/str}}</option>
+                </select>
+            </div>
+            <div class="d-flex align-items-end pb-1">
+                <label class="small mb-0"><input type="checkbox" class="mr-1" data-multipicker-preserve checked> {{#str}}preservefolders, repository_multipicker{{/str}}</label> {{{foldershelp}}}
+            </div>
+        </div>
+    </div>
+    <div class="d-flex justify-content-between align-items-center mb-2" data-multipicker-selection-actions>
+        <div>
+            <button class="btn btn-sm btn-link px-1" type="button" data-multipicker-selectall>{{#str}}selectall, repository_multipicker{{/str}}</button>
+            <button class="btn btn-sm btn-link px-1" type="button" data-multipicker-clear>{{#str}}clear, repository_multipicker{{/str}}</button>
+        </div>
+        <div class="btn-group btn-group-sm" role="group" aria-label="{{#str}}view, core{{/str}}">
+            <button class="btn btn-outline-secondary active" type="button" data-multipicker-layout="cards" aria-pressed="true" title="{{#str}}cards, repository_multipicker{{/str}}" aria-label="{{#str}}cards, repository_multipicker{{/str}}">{{#pix}}a/view_icon_active, core{{/pix}}</button>
+            <button class="btn btn-outline-secondary" type="button" data-multipicker-layout="list" aria-pressed="false" title="{{#str}}list, repository_multipicker{{/str}}" aria-label="{{#str}}list, repository_multipicker{{/str}}">{{#pix}}a/view_list_active, core{{/pix}}</button>
+            <button class="btn btn-outline-secondary" type="button" data-multipicker-layout="tree" aria-pressed="false" title="{{#str}}tree, repository_multipicker{{/str}}" aria-label="{{#str}}tree, repository_multipicker{{/str}}">{{#pix}}a/view_tree_active, core{{/pix}}</button>
+        </div>
+    </div>
+    <div class="d-flex align-items-center justify-content-between mb-2">
+        <button class="btn btn-sm btn-outline-secondary multipicker-back" type="button" data-multipicker-back hidden>{{#pix}}t/left, core{{/pix}} {{#str}}back, repository_multipicker{{/str}}</button>
+        <span class="small text-muted text-truncate ml-auto" data-multipicker-location title=""></span>
+    </div>
+    <div class="multipicker-results" data-multipicker-results aria-live="polite"></div>
+    <div class="d-flex justify-content-between align-items-center my-2" data-multipicker-pagination>
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-multipicker-previous hidden>{{#str}}previous, core{{/str}}</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-multipicker-next hidden>{{#str}}next, core{{/str}}</button>
+    </div>
+    <div class="d-flex align-items-center justify-content-between border-top pt-2 multipicker-footer">
+        <span class="small"><strong data-multipicker-count>0</strong> {{#str}}selected, repository_multipicker{{/str}}</span>
+        <div class="d-flex align-items-center">
+            <button class="btn btn-primary" type="button" data-multipicker-review disabled>{{#str}}review, repository_multipicker{{/str}} {{#pix}}t/right, core{{/pix}}</button>
+            <button class="btn btn-primary" type="button" data-multipicker-import hidden>{{#str}}import, repository_multipicker{{/str}} {{#pix}}t/right, core{{/pix}}</button>
+            <button class="btn btn-outline-danger ml-2" type="button" data-multipicker-remove hidden title="{{#str}}remove, repository_multipicker{{/str}}" aria-label="{{#str}}remove, repository_multipicker{{/str}}">{{#pix}}t/delete, core{{/pix}}</button>
+        </div>
+    </div>
+</div>

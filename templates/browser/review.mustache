@@ -1,0 +1,12 @@
+{{!
+    @template repository_multipicker/browser/review
+    @copyright 2026 Didactika.org
+    @author Hector Arrechea <hectorlazaroarrechea@gmail.com>
+    @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+    Example context (json): {"count":1,"nodes":[{"name":"example.pdf","source":"example"}]}
+}}
+<ul class="list-unstyled multipicker-reviewtree">
+    {{#nodes}}{{> repository_multipicker/browser/review_node}}{{/nodes}}
+</ul>
+
+{{#next}}<button type="button" class="btn btn-sm btn-link" data-multipicker-reviewpage="{{nextpage}}" data-path="{{path}}">{{#str}}next, core{{/str}}</button>{{/next}}

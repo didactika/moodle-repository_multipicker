@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="306 92 394 394" role="img" aria-labelledby="title desc">
+<title id="title">Documentos educativos completados</title>
+<desc id="desc">Tres documentos con birretes y marcas de verificación, sobre fondo transparente.</desc>
+<defs>
+<linearGradient id="paper" x1="0" y1="0" x2="0.85" y2="1"><stop stop-color="#d9eeee"/><stop offset="1" stop-color="#d0e9e9"/></linearGradient>
+<linearGradient id="fold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#a2cbcd"/><stop offset="1" stop-color="#c2dfe0"/></linearGradient>
+<linearGradient id="check" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#68bfc0"/><stop offset="0.55" stop-color="#55adaf"/><stop offset="1" stop-color="#409698"/></linearGradient>
+<linearGradient id="cap" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#43858b"/><stop offset="1" stop-color="#33727a"/></linearGradient>
+<g id="hat" fill="url(#cap)">
+<path d="M-48 -7 L0 -26 L48 -7 L0 12 Z"/>
+<path d="M-27 6 L0 17 L27 6 V24 C16 36 -16 36 -27 24 Z"/>
+<path d="M-38 -2 V14" fill="none" stroke="#43858b" stroke-width="3.2" stroke-linecap="round"/>
+<circle cx="-38" cy="15" r="3.4"/>
+</g>
+</defs>
+<g stroke="#10343b" stroke-width="9" stroke-linejoin="round" stroke-linecap="round">
+<path fill="url(#paper)" d="M354 111 H495 L544 159 V343 Q544 361 526 361 H354 Q336 361 336 343 V130 Q336 111 354 111 Z"/>
+<path fill="url(#fold)" d="M495 112 V142 Q495 160 513 160 H544 Z"/>
+</g>
+<use href="#hat" transform="translate(390 155) scale(.70)"/>
+<g fill="none" stroke="#94bdc1" stroke-width="8" stroke-linecap="round"><path d="M365 205 H455 M365 226 H455 M365 247 H455"/></g>
+<g stroke="#10343b" stroke-width="9" stroke-linejoin="round" stroke-linecap="round">
+<path fill="url(#paper)" d="M440 179 H568 L617 226 V387 Q617 406 599 406 H440 Q421 406 421 387 V198 Q421 179 440 179 Z"/>
+<path fill="url(#fold)" d="M568 179 V209 Q568 227 585 227 H617 Z"/>
+</g>
+<use href="#hat" transform="translate(475 221) scale(.70)"/>
+<g fill="none" stroke="#94bdc1" stroke-width="8" stroke-linecap="round"><path d="M449 267 H541 M449 288 H541 M449 309 H541"/></g>
+<g stroke="#10343b" stroke-width="9" stroke-linejoin="round" stroke-linecap="round">
+<path fill="url(#paper)" d="M529 247 H640 L688 294 V438 Q688 457 670 457 H529 Q510 457 510 438 V267 Q510 247 529 247 Z"/>
+<path fill="url(#fold)" d="M640 248 V276 Q640 295 658 295 H688 Z"/>
+</g>
+<use href="#hat" transform="translate(612 334)"/>
+<g fill="none" stroke="#94bdc1" stroke-width="8" stroke-linecap="round"><path d="M592 395 H662 M592 415 H662"/></g>
+<g fill="url(#check)" stroke="#10343b" stroke-width="9"><circle cx="360" cy="321" r="41"/><circle cx="444" cy="371" r="41"/><circle cx="528" cy="422" r="41"/></g>
+<g fill="none" stroke="#10343b" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"><path d="M340 323 L352 335 L379 307"/><path d="M425 371 L437 384 L463 356"/><path d="M508 423 L521 436 L547 408"/></g>
+</svg>

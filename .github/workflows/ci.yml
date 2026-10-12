@@ -1,32 +1,22 @@
+# @copyright 2026 Didactika.org
+# @author Hector Arrechea <hectorlazaroarrechea@gmail.com>
+# @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
 name: Moodle Plugin CI
 
-# Runs the moodle-plugin-ci checks (the same tests the Moodle.org plugins
-# database runs) so regressions are caught automatically.
-#
-# Branch model (see README.md): `main` is the development branch. This
-# template also ships one MOODLE_XXX_STABLE branch per Moodle version listed
-# in branches/ at the time it was generated -- delete whichever ones this
-# plugin does not actually support, do not cut them from scratch. Both kinds
-# of branch are protected, and both can publish a release (release.yml
-# triggers on either).
-#
-# On pull requests only, deliberately. The suite is the gate a change has to
-# pass to get in: `CI complete` below is the required status check on those
-# branches, so nothing reaches them without it. A push to a protected branch
-# is therefore always an already-tested merge, and re-running the whole
-# matrix on it would test the same commit a second time to answer a question
-# that has already been answered. What does run on a push is release.yml,
-# which only decides whether version.php changed enough to tag a release --
-# the same split the npm template uses.
-#
-# workflow_dispatch is the escape hatch for re-running the suite against a
-# branch by hand, without opening a pull request to do it.
+# Adapted from didactika/template-moodle-plugin.
+# PRs validate main and the supported maintenance lines; first publication can run CI manually.
+# Release publication is a separate, explicit workflow.
 on:
   pull_request:
     branches:
       - main
+      - master
       - 'MOODLE_*_STABLE'
   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   setup:
@@ -49,53 +39,22 @@ jobs:
         run: |
           set -euo pipefail
 
-          # ===================================================================
-          # MOODLE_PHP_TABLE is the single place that maps a Moodle version
-          # (the integer codes used by $plugin->supported / $plugin->requires,
-          # e.g. 405 = 4.5, 502 = 5.2) to the PHP versions that Moodle version
-          # itself supports. This is a fact about Moodle, not about this
-          # plugin, so it only changes when a new Moodle version ships
-          # (roughly twice a year) -- unlike the list of Moodle versions THIS
-          # plugin supports, which lives solely in version.php (never here).
-          #
-          # Add a row here BEFORE adding the matching version number to
-          # $plugin->supported. If a supported version has no row below, the
-          # step fails loudly instead of silently testing the wrong (or no)
-          # PHP versions for it.
-          #
-          # Verified against https://moodledev.io/general/development/policies/php
-          # and the individual https://moodledev.io/general/releases/<x.y>
-          # pages on 2026-08-09.
-          # ===================================================================
+          # PHP ranges verified against the official 4.5 and 5.3 release requirements on 2026-10-10.
+          # https://moodledev.io/general/releases/4.5
+          # https://moodledev.io/general/releases/5.3
           MOODLE_PHP_TABLE='{
             "400": ["7.4", "8.0"],
-            "401": ["7.4", "8.0", "8.1"],
-            "402": ["8.0", "8.1", "8.2"],
-            "403": ["8.0", "8.1", "8.2"],
-            "404": ["8.1", "8.2", "8.3"],
-            "405": ["8.1", "8.2", "8.3"],
-            "500": ["8.2", "8.3", "8.4"],
-            "501": ["8.2", "8.3", "8.4"],
-            "502": ["8.3", "8.4"],
+            "401": ["8.0"],
+            "402": ["8.0"],
+            "403": ["8.0"],
+            "404": ["8.1"],
+            "405": ["8.1", "8.3"],
+            "500": ["8.2"],
+            "501": ["8.2"],
+            "502": ["8.3"],
             "503": ["8.3", "8.4"]
           }'
-          # VERIFY: the 400-404 rows were transcribed from the summary table
-          # on the policy page above, not each version's own release notes
-          # (unlike 405 and 500-503, which were each checked against their
-          # individual release page). Double-check the row you rely on if
-          # this plugin still supports a pre-4.5 Moodle.
-
-          # NOTE ON SEMANTICS: Moodle defines $plugin->supported as an
-          # inclusive RANGE, [lowest, highest] -- so [405, 502] means "4.5
-          # through 5.2", which includes 5.0 and 5.1, not just the two
-          # endpoints. What this loop builds is a matrix over the values
-          # actually written there, which for a well-formed two-element range
-          # means the floor and the ceiling get tested and the versions in
-          # between do not. That is a deliberate cost trade-off and the same
-          # one moodle-local_servicemanager makes by hand, but it is a choice,
-          # not what `supported` means: a regression that only affects 5.1
-          # would not be caught. To test the whole range, list the intermediate
-          # versions explicitly in MOODLE_PHP_TABLE and expand them here.
+          # Expand supported lower/upper bounds across existing release codes, including the 4.x/5.x gap.
           supported_raw=$(grep -oP '\$plugin->supported\s*=\s*\[\K[^\]]+' version.php || true)
           if [ -z "$supported_raw" ]; then
             echo "::error::Could not find \$plugin->supported = [...] in version.php."
@@ -113,7 +72,12 @@ jobs:
           # GitHub Actions' own matrix schema, not jq's, and unaffected by
           # this rename.
           entries='[]'
-          IFS=',' read -ra versions <<< "$supported_raw"
+          supported_raw=$(echo "$supported_raw" | tr -d '[:space:]' | tr ',' '\n' | sort -u | paste -sd,)
+
+          lower=$(echo "$supported_raw" | cut -d, -f1)
+          upper=$(echo "$supported_raw" | awk -F, '{print $NF}')
+          expanded=$(echo "$MOODLE_PHP_TABLE" | jq -r --argjson lower "$lower" --argjson upper "$upper" 'keys[] | select((tonumber >= $lower) and (tonumber <= $upper))')
+          mapfile -t versions <<< "$expanded"
           for raw in "${versions[@]}"; do
             v=$(echo "$raw" | tr -d '[:space:]')
             [ -z "$v" ] && continue
@@ -148,16 +112,17 @@ jobs:
 
     services:
       postgres:
-        image: postgres:16
+        image: postgres:17
         env:
           POSTGRES_USER: 'postgres'
-          POSTGRES_HOST_AUTH_METHOD: 'trust'
+          POSTGRES_PASSWORD: 'postgres'
+          POSTGRES_INITDB_ARGS: '--auth-local=scram-sha-256 --auth-host=scram-sha-256'
         ports:
           - 5432:5432
-        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 3
+        options: --health-cmd="pg_isready -U postgres" --health-interval 10s --health-timeout 5s --health-retries 3
 
       mariadb:
-        image: mariadb:10
+        image: mariadb:11.4
         env:
           MYSQL_USER: 'root'
           MYSQL_ALLOW_EMPTY_PASSWORD: "true"
@@ -165,7 +130,7 @@ jobs:
           MYSQL_COLLATION_SERVER: "utf8mb4_unicode_ci"
         ports:
           - 3306:3306
-        options: --health-cmd="mysqladmin ping" --health-interval 10s --health-timeout 5s --health-retries 3
+        options: --health-cmd="healthcheck.sh --connect --innodb_initialized" --health-interval 10s --health-timeout 5s --health-retries 3
 
     strategy:
       fail-fast: false
@@ -193,28 +158,49 @@ jobs:
 
       - name: Initialise moodle-plugin-ci
         run: |
-          composer create-project -n --no-dev --prefer-dist moodlehq/moodle-plugin-ci ci ^4
-          echo $(cd ci/bin; pwd) >> $GITHUB_PATH
-          echo $(cd ci/vendor/bin; pwd) >> $GITHUB_PATH
+          mkdir -p ci/bin
+          curl --fail --location --retry 3 https://github.com/moodlehq/moodle-plugin-ci/releases/download/4.5.11/moodle-plugin-ci.phar --output ci/bin/moodle-plugin-ci.phar
+          echo "39b5d0d71f5ab88fac1c3f5fc1166b8673bc0a488b29cd8c56a8bca56a8f8bca  ci/bin/moodle-plugin-ci.phar" | sha256sum --check --strict
+          chmod +x ci/bin/moodle-plugin-ci.phar
+          # Child PHP processes need the .phar suffix to resolve archive URLs.
+          ln -s moodle-plugin-ci.phar ci/bin/moodle-plugin-ci
+          echo "$(pwd)/ci/bin" >> "$GITHUB_PATH"
           sudo locale-gen en_AU.UTF-8
           echo "NVM_DIR=$HOME/.nvm" >> $GITHUB_ENV
 
       - name: Install moodle-plugin-ci
-        run: moodle-plugin-ci install --plugin ./plugin --db-host=127.0.0.1
+        run: moodle-plugin-ci install --plugin ./plugin --db-host=127.0.0.1 --db-pass="$DB_PASS"
         env:
           DB: ${{ matrix.database }}
+          DB_PASS: ${{ matrix.database == 'pgsql' && 'postgres' || '' }}
           MOODLE_BRANCH: ${{ matrix.moodle-branch }}
           # Uncomment this to run Behat tests using the Moodle App.
           # MOODLE_APP: 'true'
+
+      - name: Update browser compatibility data
+        if: ${{ !cancelled() }}
+        working-directory: moodle
+        run: |
+          source "$NVM_DIR/nvm.sh"
+          # Refresh metadata with a supported updater runtime, then restore the core build runtime.
+          nvm install 22
+          nvm use 22
+          npx --yes update-browserslist-db@latest
+          nvm use "$(cat .nvmrc)"
 
       - name: PHP Lint
         if: ${{ !cancelled() }}
         run: moodle-plugin-ci phplint
 
       - name: PHP Mess Detector
-        continue-on-error: true # This step will show errors but will not fail
         if: ${{ !cancelled() }}
-        run: moodle-plugin-ci phpmd
+        run: |
+          set -o pipefail
+          moodle-plugin-ci phpmd 2>&1 | tee phpmd.log
+          if grep -Eq '(^|[[:space:]|])(VIOLATION|WARNING)([[:space:]|]|$)' phpmd.log; then
+            echo "::error::PHP Mess Detector reported violations or warnings."
+            exit 1
+          fi
 
       - name: Moodle Code Checker
         if: ${{ !cancelled() }}
@@ -234,7 +220,13 @@ jobs:
 
       - name: Mustache Lint
         if: ${{ !cancelled() }}
-        run: moodle-plugin-ci mustache
+        run: |
+          set -o pipefail
+          moodle-plugin-ci mustache 2>&1 | tee mustache.log
+          if grep -Eiq '(^|[[:space:]|])(warning|error|violation)([[:space:]|:]|$)|##\[(warning|error)\]' mustache.log; then
+            echo "::error::Mustache validation reported errors, warnings or violations."
+            exit 1
+          fi
 
       - name: Grunt
         if: ${{ !cancelled() }}
@@ -268,19 +260,7 @@ jobs:
         run: exit 1
 
   ci-complete:
-    # Single, stable status check to mark as "required" in branch protection
-    # on `main` and every `MOODLE_*_STABLE` branch. The individual matrix job
-    # names (e.g. "test (8.3, MOODLE_405_STABLE, pgsql)") change whenever the
-    # matrix changes, which makes them brittle to require directly; this
-    # aggregator name never changes. It succeeds only when every matrix
-    # combination in `test` succeeded. Do not rename this job's `name:` --
-    # branch protection targets it by this exact string.
-    #
-    # `if: always()` is what makes it report at all when the matrix failed or
-    # was skipped, and is exactly why the step below has to assert the
-    # result instead of just echoing. A gate that runs unconditionally and
-    # succeeds unconditionally reports green over a red suite, which is worse
-    # than having no gate: it looks like one.
+    # Configure this aggregate status as the required PR check when protecting maintenance branches.
     name: CI complete
     if: always()
     needs: test
