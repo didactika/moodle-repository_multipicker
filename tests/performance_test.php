@@ -102,6 +102,41 @@ final class performance_test extends \advanced_testcase {
     }
 
     /**
+     * A large mixed-source batch remains valid when the native Folder form saves its draft.
+     */
+    public function test_many_imported_files_save_through_the_native_folder_editor(): void {
+        global $CFG, $SESSION;
+        [$scope, $source] = $this->fixture();
+        for ($index = 0; $index < 250; $index++) {
+            get_file_storage()->create_file_from_string(['contextid' => $scope['contextid'], 'component' => 'mod_folder',
+                'filearea' => 'content', 'itemid' => 0, 'filepath' => '/bulk/', 'filename' => 'bulk' . $index . '.txt',
+                'source' => 'Site file ' . $index], 'bulk');
+        }
+        $operations = browser::review($scope, [$source], 1000, '/');
+        $this->assertCount(252, $operations);
+        $SESSION->repository_multipicker['performance'] += ['sources' => [$source], 'approval' => $operations,
+            'maxfiles' => 1000, 'basepath' => '/'];
+        browser::apply('performance', ['itemid' => $scope['draftid']], -1, -1);
+
+        require_once($CFG->libdir . '/filelib.php');
+        file_save_draft_area_files(
+            $scope['draftid'],
+            $scope['contextid'],
+            'mod_folder',
+            'content',
+            17,
+            ['subdirs' => true, 'maxfiles' => -1, 'maxbytes' => -1]
+        );
+        $saved = get_file_storage()->get_area_files($scope['contextid'], 'mod_folder', 'content', 17, 'filename', false);
+        $this->assertCount(252, $saved);
+        $sources = [];
+        foreach ($saved as $file) {
+            $sources[$file->get_filename()] = $file->get_source();
+        }
+        $this->assertSame('Site file 128', $sources['bulk128.txt']);
+    }
+
+    /**
      * The review reuses recent inspection work; approvals never reuse that authorization snapshot.
      */
     public function test_display_snapshot_avoids_repeated_walk_and_approval_rechecks(): void {

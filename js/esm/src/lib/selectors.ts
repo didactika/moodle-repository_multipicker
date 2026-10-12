@@ -2,7 +2,7 @@
 // Moodle is free software under the GNU GPL v3 or later.
 /**
  * Shared DOM contracts.
- * @module repository_multipicker/local/selectors
+ * @module repository_multipicker/lib/selectors
  * @copyright 2026 Didactika.org
  * @author Hector Arrechea <hectorlazaroarrechea@gmail.com>
  * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later

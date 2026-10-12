@@ -1,8 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../src/local/native.ts"],
-  "sourceRoot": "../../../../../../sources/public/repository/multipicker/js/esm/build",
-  "sourcesContent": ["// This file is part of Moodle - https://moodle.org/\n// Moodle is free software under the GNU GPL v3 or later.\n\n/**\n * Native filemanager options and embedded chooser presentation.\n * @copyright 2026 Didactika.org\n * @author Hector Arrechea <hectorlazaroarrechea@gmail.com>\n * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later\n */\nimport type {NativeWindow} from './contracts';\n\ntype HostObject = Element & {multipickerPresentationCleanup?: () => void};\n\n/** @returns {Object} Current owning filemanager options. */\nexport const options = () => (window.parent as NativeWindow).M?.core_filepicker?.active_filepicker?.options;\n\n/** @param {HTMLElement} root Embedded chooser. */\nexport const mount = (root: HTMLElement): void => {\n    root.ownerDocument.body.classList.add('multipicker-embedded');\n    const parent = window.parent as Window & typeof globalThis & NativeWindow;\n    const object = window.frameElement as HostObject | null;\n    const host = object?.closest<HTMLElement>('.file-picker');\n    if (object && host) {\n        parent.require(['repository_multipicker/local/picker_host'], (adapter: {mount(object: Element): void}) => adapter.mount(object));\n    }\n};\n"],
-  "mappings": ";;AAGA;AAAA;AAAA;AAAA;AAAA;AAAA;AAWO,MAAM,UAAU,6BAAO,OAAO,OAAwB,GAAG,iBAAiB,mBAAmB,SAA7E;AAGhB,MAAM,QAAQ,wBAAC,SAA4B;AAC9C,OAAK,cAAc,KAAK,UAAU,IAAI,sBAAsB;AAC5D,QAAM,SAAS,OAAO;AACtB,QAAM,SAAS,OAAO;AACtB,QAAM,OAAO,QAAQ,QAAqB,cAAc;AACxD,MAAI,UAAU,MAAM;AAChB,WAAO,QAAQ,CAAC,0CAA0C,GAAG,CAAC,YAA4C,QAAQ,MAAM,MAAM,CAAC;AAAA,EACnI;AACJ,GARqB;",
-  "names": []
-}

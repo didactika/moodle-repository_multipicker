@@ -1,4 +1,4 @@
-import t from"@moodle/lms/repository_multipicker/local/selectors";/**
+import t from"../lib/selectors";/**
  * Delegated chooser listeners, independent of layout and result refreshes.
  * @copyright 2026 Didactika.org
  * @author Hector Arrechea <hectorlazaroarrechea@gmail.com>

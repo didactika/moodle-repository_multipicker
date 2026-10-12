@@ -1,6 +1,6 @@
-import e from"@moodle/lms/repository_multipicker/local/selectors";import{createActions as s}from"@moodle/lms/repository_multipicker/local/actions";import{register as a}from"@moodle/lms/repository_multipicker/local/listeners";import{mount as i}from"@moodle/lms/repository_multipicker/local/native";/**
+import e from"./lib/selectors";import{createActions as s}from"./engine/actions";import{register as a}from"./components/PickerEvents";import{mount as i}from"./services/native";/**
  * Chooser initialization.
- * @module repository_multipicker/local/controller
+ * @module repository_multipicker/Picker
  * @copyright 2026 Didactika.org
  * @author Hector Arrechea <hectorlazaroarrechea@gmail.com>
  * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later

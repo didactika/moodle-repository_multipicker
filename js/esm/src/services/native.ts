@@ -7,7 +7,7 @@
  * @author Hector Arrechea <hectorlazaroarrechea@gmail.com>
  * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-import type {NativeWindow} from './contracts';
+import type {NativeWindow} from '../types';
 
 type HostObject = Element & {multipickerPresentationCleanup?: () => void};
 

@@ -30,7 +30,7 @@ The repository uses the same accessible files, directories and search as Server 
 
 ## Installation
 
-**Requirements:** Moodle 5.3, PHP 8.3 or newer, and the database requirements of the selected Moodle release. This distribution’s release is **5.3.0**.
+**Requirements:** Moodle 5.3, PHP 8.3 or newer, and the database requirements of the selected Moodle release. This distribution’s release is **5.3.1**.
 
 **From a release:** download the matching release ZIP, open **Site administration → Plugins → Install plugins**, upload the package and follow the prompts.
 
@@ -77,6 +77,7 @@ The chooser respects native destination limits and bounds traversal to 500 selec
 | A selection exceeds a limit | Remove files or folders, or change the owning form’s allowed limits |
 | A destination path conflicts | Clear that source from the selection or choose another destination directory |
 | A session expired | Reopen the repository and review the current files before importing |
+| A draft imported with an older version fails when saving the Folder form | Remove that failed draft selection and import it again after updating the plugin; new imports use Moodle's native draft source format |
 
 ## Theme colours
 

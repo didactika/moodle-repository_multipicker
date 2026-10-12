@@ -4,4 +4,4 @@
  * @author Hector Arrechea <hectorlazaroarrechea@gmail.com>
  * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-//# sourceMappingURL=contracts.dev.js.map
+//# sourceMappingURL=types.dev.js.map

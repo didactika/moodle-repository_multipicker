@@ -1,0 +1,8 @@
+{
+  "version": 3,
+  "sources": ["../src/Picker.ts"],
+  "sourceRoot": "../../../../../../sources/public/repository/multipicker/js/esm/build",
+  "sourcesContent": ["// This file is part of Moodle - https://moodle.org/\n// Moodle is free software under the GNU GPL v3 or later.\n\n/**\n * Chooser initialization.\n * @module repository_multipicker/Picker\n * @copyright 2026 Didactika.org\n * @author Hector Arrechea <hectorlazaroarrechea@gmail.com>\n * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later\n */\nimport Selectors from './lib/selectors';\nimport {createActions} from './engine/actions';\nimport {register} from './components/PickerEvents';\nimport {mount} from './services/native';\n\n/** @param {string} scope Session scope. */\nexport const init = (scope: string) => {\n    const root = document.querySelector<HTMLElement>(Selectors.root);\n    if (!root || root.dataset.scope !== scope || root.dataset.ready) {\n        return;\n    }\n    root.dataset.ready = 'true';\n    mount(root);\n    const actions = createActions(root);\n    register(root, actions);\n    actions.load();\n};\n"],
+  "mappings": ";;AAGA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAOA,OAAO,eAAe;AACtB,SAAQ,qBAAoB;AAC5B,SAAQ,gBAAe;AACvB,SAAQ,aAAY;AAGb,MAAM,OAAO,wBAAC,UAAkB;AACnC,QAAM,OAAO,SAAS,cAA2B,UAAU,IAAI;AAC/D,MAAI,CAAC,QAAQ,KAAK,QAAQ,UAAU,SAAS,KAAK,QAAQ,OAAO;AAC7D;AAAA,EACJ;AACA,OAAK,QAAQ,QAAQ;AACrB,QAAM,IAAI;AACV,QAAM,UAAU,cAAc,IAAI;AAClC,WAAS,MAAM,OAAO;AACtB,UAAQ,KAAK;AACjB,GAVoB;",
+  "names": []
+}

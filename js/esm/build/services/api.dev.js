@@ -2,7 +2,7 @@ var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 /**
  * Authenticated browser transport.
- * @module repository_multipicker/local/repository
+ * @module repository_multipicker/services/api
  * @copyright 2026 Didactika.org
  * @author Hector Arrechea <hectorlazaroarrechea@gmail.com>
  * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -31,4 +31,4 @@ const request = /* @__PURE__ */ __name(async (scope, fields) => {
 export {
   request
 };
-//# sourceMappingURL=repository.dev.js.map
+//# sourceMappingURL=api.dev.js.map

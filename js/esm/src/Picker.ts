@@ -3,15 +3,15 @@
 
 /**
  * Chooser initialization.
- * @module repository_multipicker/local/controller
+ * @module repository_multipicker/Picker
  * @copyright 2026 Didactika.org
  * @author Hector Arrechea <hectorlazaroarrechea@gmail.com>
  * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-import Selectors from '@moodle/lms/repository_multipicker/local/selectors';
-import {createActions} from '@moodle/lms/repository_multipicker/local/actions';
-import {register} from '@moodle/lms/repository_multipicker/local/listeners';
-import {mount} from '@moodle/lms/repository_multipicker/local/native';
+import Selectors from './lib/selectors';
+import {createActions} from './engine/actions';
+import {register} from './components/PickerEvents';
+import {mount} from './services/native';
 
 /** @param {string} scope Session scope. */
 export const init = (scope: string) => {

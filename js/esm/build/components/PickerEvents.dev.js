@@ -6,7 +6,7 @@ var __name = (target, value) => __defProp(target, "name", { value, configurable:
  * @author Hector Arrechea <hectorlazaroarrechea@gmail.com>
  * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-import Selectors from "@moodle/lms/repository_multipicker/local/selectors";
+import Selectors from "../lib/selectors";
 const register = /* @__PURE__ */ __name((root, actions) => {
   let timer;
   root.addEventListener("input", (event) => {
@@ -93,4 +93,4 @@ const register = /* @__PURE__ */ __name((root, actions) => {
 export {
   register
 };
-//# sourceMappingURL=listeners.dev.js.map
+//# sourceMappingURL=PickerEvents.dev.js.map

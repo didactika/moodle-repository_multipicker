@@ -7,8 +7,8 @@
  * @author Hector Arrechea <hectorlazaroarrechea@gmail.com>
  * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-import type {createActions} from './actions';
-import Selectors from '@moodle/lms/repository_multipicker/local/selectors';
+import type {createActions} from '../engine/actions';
+import Selectors from '../lib/selectors';
 
 /**
  * Register listeners for one embedded chooser.

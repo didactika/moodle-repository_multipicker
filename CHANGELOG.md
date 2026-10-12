@@ -1,5 +1,11 @@
 # Changelog
 
+## [5.3.1] - 2026-10-13
+
+- Write native draft source metadata for copied files and aliases so Moodle can save large Folder imports containing ordinary source text.
+- Cover the complete repository import and native Folder save in regression tests.
+- Organize the 5.3 TypeScript picker into view components, state engine, services, selectors and shared types.
+
 ## [5.3.0] - 2026-10-11
 
 - Preserve the owner-selected `.503` minimum-Moodle suffix in plugin version metadata and release packages.

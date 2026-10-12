@@ -7,10 +7,11 @@
  * @author Hector Arrechea <hectorlazaroarrechea@gmail.com>
  * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-import type {NativeWindow, NativeFile} from './contracts';
-import Selectors from '@moodle/lms/repository_multipicker/local/selectors';
-import {request} from '@moodle/lms/repository_multipicker/local/repository';
-import {options} from '@moodle/lms/repository_multipicker/local/native';
+import type {NativeWindow, NativeFile} from '../types';
+import {renderPicker} from '../components/PickerView';
+import Selectors from '../lib/selectors';
+import {request} from '../services/api';
+import {options} from '../services/native';
 
 /**
  * Create actions for one embedded chooser.
@@ -39,77 +40,8 @@ export const createActions = (root: HTMLElement) => {
         }
         return false;
     };
-    const isSelected = (source: string) => {
-        for (let depth = 0; source && depth < 100; depth++) {
-            if (excluded.has(source)) { return false; }
-            if (selected.has(source)) { return true; }
-            source = parents.get(source) || '';
-        }
-        return false;
-    };
-    const reviewedState = (check: HTMLInputElement) => {
-        if (reviewChecks.has(check.value)) { return reviewChecks.get(check.value); }
-        const path = check.closest<HTMLElement>(Selectors.reviewNode)!.dataset.path || '/';
-        let state = false, length = -1;
-        reviewChecks.forEach((selected, key) => {
-            if (key.startsWith('folder:') && path.startsWith(key.slice(7)) && key.length > length) {
-                state = selected;
-                length = key.length;
-            }
-        });
-        return state;
-    };
-    const sync = () => {
-        root.querySelectorAll<HTMLInputElement>(Selectors.check).forEach(check => {
-            check.checked = isSelected(check.value);
-            check.indeterminate = false;
-            check.disabled = busy;
-            check.closest<HTMLElement>(Selectors.card)!.classList.toggle('border-primary', check.checked);
-        });
-        // Derive visible directory state without fetching unopened descendants.
-        [...root.querySelectorAll<HTMLElement>(Selectors.node)].reverse().forEach(node => {
-            const children = node.querySelector<HTMLElement>(Selectors.children);
-            const check = node.querySelector<HTMLInputElement>(Selectors.check);
-            if (!children || !check) { return; }
-            const files = [...children.querySelectorAll<HTMLInputElement>(Selectors.check)];
-            const any = files.some(file => file.checked || file.indeterminate);
-            const all = files.length > 0 && files.every(file => file.checked && !file.indeterminate);
-            check.indeterminate = children.dataset.complete === 'true'
-                ? any && !all : !check.checked && (folderCounts[check.value] || 0) > 0;
-            if (children.dataset.complete === 'true') { check.checked = all; }
-            check.closest<HTMLElement>(Selectors.card)!.classList.toggle('border-primary', check.checked || check.indeterminate);
-        });
-        element(Selectors.count).textContent = String(count);
-        element<HTMLButtonElement>(Selectors.review).disabled = !count || busy;
-        element<HTMLButtonElement>(Selectors.review).hidden = review;
-        element<HTMLButtonElement>(Selectors.import).hidden = !review;
-        element<HTMLButtonElement>(Selectors.import).disabled = busy || !count;
-        element(Selectors.selectionActions).hidden = review;
-        element(Selectors.selectionActions).classList.toggle('d-flex', !review);
-        element(Selectors.filters).hidden = review;
-        element(Selectors.pagination).hidden = review;
-        element(Selectors.pagination).classList.toggle('d-flex', !review);
-        element<HTMLButtonElement>(Selectors.back).hidden = !review && !parent;
-        element<HTMLButtonElement>(Selectors.clearSearch).disabled = !query;
-        element<HTMLButtonElement>(Selectors.remove).hidden = !review || ![...reviewChecks.values()].some(Boolean);
-        element<HTMLButtonElement>(Selectors.remove).disabled = busy;
-        root.querySelectorAll<HTMLInputElement>(Selectors.reviewCheck).forEach(check => {
-            const path = check.closest<HTMLElement>(Selectors.reviewNode)!.dataset.path || '/';
-            reviewPaths.set(check.value, path);
-            check.checked = !!reviewedState(check);
-            check.indeterminate = false;
-            if (check.matches(Selectors.reviewGroup)) {
-                reviewChecks.forEach((state, key) => {
-                    if (key !== check.value && (reviewPaths.get(key) || key.slice(7)).startsWith(path)
-                            && state !== check.checked) { check.indeterminate = true; }
-                });
-            }
-        });
-        root.querySelectorAll<HTMLElement>('[data-multipicker-folder-count]').forEach(badge => {
-            const total = folderCounts[badge.dataset.multipickerFolderCount!] || 0;
-            badge.textContent = root.dataset.folderselection!.replace('{$a}', String(total));
-        });
-    };
+    const sync = () => renderPicker(root, {selected, excluded, parents, folderCounts, reviewChecks,
+        reviewPaths, count, review, busy, parent, query});
     const fields = (action: string) => {
         const native = options();
         if (!native || native.env !== 'filemanager') { throw new Error(root.dataset.unavailable); }
