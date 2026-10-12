@@ -12,7 +12,7 @@
         {{#folder}}<button type="button" class="btn btn-sm btn-link px-1 mr-1" data-multipicker-reviewtoggle aria-expanded="false" aria-label="{{#str}}open, repository_multipicker{{/str}}">{{#pix}}t/collapsed, core{{/pix}}</button>{{#pix}}f/folder, core{{/pix}}{{/folder}}
         {{^folder}}{{#pix}}f/document, core{{/pix}}{{/folder}}
         <strong class="small multipicker-reviewname ml-1" title="{{name}}">{{name}}</strong>
-        <span class="multipicker-chip ml-auto">{{#folder}}{{count}}{{/folder}}{{^folder}}{{#aliases}}{{#str}}reference, repository_multipicker{{/str}}{{/aliases}}{{^aliases}}{{#str}}copy, repository_multipicker{{/str}}{{/aliases}}{{/folder}}</span>
+        <span class="badge badge-primary multipicker-chip ml-auto">{{#folder}}{{count}}{{/folder}}{{^folder}}{{#aliases}}{{#str}}reference, repository_multipicker{{/str}}{{/aliases}}{{^aliases}}{{#str}}copy, repository_multipicker{{/str}}{{/aliases}}{{/folder}}</span>
         <button type="button" class="btn btn-sm btn-link text-danger ml-1" data-multipicker-delete="{{source}}" title="{{#str}}remove, repository_multipicker{{/str}}" aria-label="{{#str}}remove, repository_multipicker{{/str}}">{{#pix}}t/delete, core{{/pix}}</button>
     </div>
     {{#folder}}<div class="ml-3 pl-2 border-left" data-multipicker-reviewchildren hidden></div>{{/folder}}

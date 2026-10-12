@@ -12,16 +12,11 @@
 export const options = () => window.parent.M?.core_filepicker?.active_filepicker?.options;
 /** @param {HTMLElement} root Embedded chooser. */
 export const mount = (root) => {
-    document.body.classList.add('multipicker-embedded');
+    root.ownerDocument.body.classList.add('multipicker-embedded');
     const parent = window.parent;
     const object = window.frameElement;
     const host = object?.closest('.file-picker');
     if (host) {
         parent.require(['repository_multipicker/local/picker_host'], adapter => adapter.mount(object));
-        const background = parent.getComputedStyle(host).backgroundColor;
-        if (background !== 'rgba(0, 0, 0, 0)') {
-            root.style.setProperty('--multipicker-background', background);
-            document.body.style.setProperty('--multipicker-background', background);
-        }
     }
 };
