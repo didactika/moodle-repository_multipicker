@@ -37,13 +37,15 @@ final class review implements \renderable, \templatable {
      * @param array $operations Reviewed file operations.
      * @param bool $aliases Use aliases instead of independent copies.
      */
-    public function __construct(array $operations, bool $aliases = false) {
+    public function __construct(array $operations, bool $aliases) {
         $this->operations = $operations;
         $this->aliases = $aliases;
     }
 
     /**
      * Export one destination tree using native Moodle icons.
+     *
+     * {@inheritdoc}
      * @param \renderer_base $output Native renderer.
      * @return array Template context.
      */

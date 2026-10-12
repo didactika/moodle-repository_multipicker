@@ -33,10 +33,10 @@ final class preview {
      * @param string $token Bound scope token.
      * @param array $scope Current authorized scope.
      * @param array $options Selection request.
-     * @param bool $fresh Force complete authorization for an approval.
+     * @param string $mode Display cache or fresh approval authorization.
      * @return array Prepared operations and directory counts.
      */
-    public static function prepare(string $token, array $scope, array $options, bool $fresh = false): array {
+    public static function prepare(string $token, array $scope, array $options, string $mode = 'display'): array {
         global $SESSION, $DB, $USER;
         $draft = $DB->get_records(
             'files',
@@ -47,7 +47,7 @@ final class preview {
         );
         $signature = hash('sha256', json_encode([$options, $draft]));
         $snapshot = $SESSION->repository_multipicker[$token]['preview'] ?? null;
-        if (!$fresh && $snapshot && $snapshot['signature'] === $signature && $snapshot['expires'] >= time()) {
+        if ($mode === 'display' && $snapshot && $snapshot['signature'] === $signature && $snapshot['expires'] >= time()) {
             foreach ($options['sources'] as $source) {
                 browser::source($source);
             }
@@ -59,7 +59,7 @@ final class preview {
             $options['sources'],
             $options['maxfiles'],
             $options['basepath'],
-            $options['preservefolders'],
+            $options['preservefolders'] ? 'preserve' : 'flat',
             $options['excluded'],
             $counts
         );
@@ -82,10 +82,7 @@ final class preview {
             $specificity = -1;
             foreach ([false => $kept, true => $removed] as $selected => $rules) {
                 foreach ($rules as $rule) {
-                    $folder = strpos($rule, 'folder:') === 0 ? substr($rule, 7) : null;
-                    $matches = $folder !== null ? strpos($operation['filepath'], $folder) === 0
-                        : $operation['source'] === $rule;
-                    $length = $folder !== null ? strlen($folder) : PHP_INT_MAX;
+                    [$matches, $length] = self::match_rule($operation, $rule);
                     if ($matches && $length > $specificity) {
                         $exclude = (bool)$selected;
                         $specificity = $length;
@@ -97,5 +94,20 @@ final class preview {
             }
         }
         return $result;
+    }
+
+    /**
+     * Match a checked branch and report its specificity.
+     *
+     * @param array $operation Reviewed destination file.
+     * @param string $rule Checked file or folder.
+     * @return array Result.
+     */
+    private static function match_rule(array $operation, string $rule): array {
+        if (strpos($rule, 'folder:') === 0) {
+            $folder = substr($rule, 7);
+            return [strpos($operation['filepath'], $folder) === 0, strlen($folder)];
+        }
+        return [$operation['source'] === $rule, PHP_INT_MAX];
     }
 }

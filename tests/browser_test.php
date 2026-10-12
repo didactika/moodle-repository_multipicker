@@ -46,9 +46,12 @@ final class browser_test extends \advanced_testcase {
         $context = \context_module::instance($folder->cmid);
         $fs = get_file_storage();
         foreach (['one.txt' => 'one', 'two.txt' => 'two'] as $name => $content) {
-            $fs->create_file_from_string(['contextid' => $context->id, 'component' => 'mod_folder',
-                'filearea' => 'content', 'itemid' => 0, 'filepath' => '/nested/', 'filename' => $name,
-                'author' => 'Source author', 'license' => 'cc'], $content);
+            $fs->create_file_from_string(
+                ['contextid' => $context->id, 'component' => 'mod_folder',
+                    'filearea' => 'content', 'itemid' => 0, 'filepath' => '/nested/', 'filename' => $name,
+                    'author' => 'Source author', 'license' => 'cc'],
+                $content
+            );
         }
         $scope = ['userid' => $USER->id, 'expires' => time() + 3600, 'draftid' => file_get_unused_draft_itemid(),
             'types' => ['*'], 'maxbytes' => -1, 'areamaxbytes' => -1, 'contextid' => $context->id];
@@ -65,16 +68,16 @@ final class browser_test extends \advanced_testcase {
         global $SESSION, $USER;
         [$scope, $source] = $this->fixture();
         $counts = [];
-        $files = browser::review($scope, [$source, $source], 2, '/', true, [], $counts);
+        $files = browser::review($scope, [$source, $source], 2, '/', 'preserve', [], $counts);
         $this->assertCount(2, $files);
         $this->assertSame(2, $counts[$source]);
         $nested = browser::review($scope, [$files[0]['source']], 2, '/');
         $this->assertSame('/nested/', $nested[0]['filepath']);
-        $flat = browser::review($scope, [$files[0]['source']], 2, '/', false);
+        $flat = browser::review($scope, [$files[0]['source']], 2, '/', 'flat');
         $this->assertSame('/', $flat[0]['filepath']);
-        browser::review($scope, [$source, $files[0]['source']], 2, '/', true, [], $counts);
+        browser::review($scope, [$source, $files[0]['source']], 2, '/', 'preserve', [], $counts);
         $this->assertSame(2, $counts[$source]);
-        browser::review($scope, [$source], 2, '/', true, [$files[0]['source']], $counts);
+        browser::review($scope, [$source], 2, '/', 'preserve', [$files[0]['source']], $counts);
         $this->assertSame(1, $counts[$source]);
         $SESSION->repository_multipicker['test'] += ['sources' => [$source], 'approval' => $files,
             'maxfiles' => 2, 'basepath' => '/'];
@@ -134,14 +137,16 @@ final class browser_test extends \advanced_testcase {
         } catch (\moodle_exception $exception) {
             $this->assertSame('unavailable', $exception->errorcode);
         }
-        $this->assertEmpty($fs->get_area_files(
-            \context_user::instance($USER->id)->id,
-            'user',
-            'draft',
-            $scope['draftid'],
-            'id',
-            false
-        ));
+        $this->assertEmpty(
+            $fs->get_area_files(
+                \context_user::instance($USER->id)->id,
+                'user',
+                'draft',
+                $scope['draftid'],
+                'id',
+                false
+            )
+        );
     }
 
     /**
@@ -177,12 +182,12 @@ final class browser_test extends \advanced_testcase {
      */
     public function test_flat_import_and_recursive_exclusions(): void {
         [$scope, $source] = $this->fixture();
-        $all = browser::review($scope, [$source], 2, '/', false);
+        $all = browser::review($scope, [$source], 2, '/', 'flat');
         $this->assertCount(2, $all);
         foreach ($all as $file) {
             $this->assertSame('/', $file['filepath']);
         }
-        $remaining = browser::review($scope, [$source], 1, '/', false, [$all[0]['source']]);
+        $remaining = browser::review($scope, [$source], 1, '/', 'flat', [$all[0]['source']]);
         $this->assertCount(1, $remaining);
         $this->assertSame($all[1]['source'], $remaining[0]['source']);
     }
