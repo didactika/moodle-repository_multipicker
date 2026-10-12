@@ -18,3 +18,8 @@
 - Render collapsed review branches on demand, page direct children and support individual file/folder removal with unloaded descendant exceptions.
 - Bound long destination paths before native storage writes with stable abbreviated folder names, preserving file content and source metadata.
 - Show the full native source route, enforce two-line titles in every layout and remove native icon margins from compact delete controls.
+- Separate validation, native listing and copy preparation into focused services without removing regression coverage.
+- Enforce clean PHP Mess Detector reports and zero coding/documentation warnings in both maintenance lines.
+- Use the official checksum-verified Moodle Plugin CI 4.5.11 artifact and password-authenticated PostgreSQL initialization.
+- Refresh browser compatibility metadata with Node 22 and restore the core's own frontend build runtime.
+- Install the initial public schema without obsolete upgrade callbacks.

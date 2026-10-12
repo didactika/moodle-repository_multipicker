@@ -77,10 +77,12 @@ if (optional_param('ajax', 0, PARAM_BOOL)) {
                 optional_param('page', 0, PARAM_INT),
                 optional_param('query', '', PARAM_TEXT)
             );
-            echo json_encode(['html' => $renderer->render_from_template('repository_multipicker/browser/results', $listing),
-                'parent' => $listing['parent'], 'page' => $listing['page'], 'next' => $listing['next'],
-                'previous' => $listing['previous'], 'location' => $listing['location'],
-                'sources' => $listing['selection'] ?? null]);
+            echo json_encode(
+                ['html' => $renderer->render_from_template('repository_multipicker/browser/results', $listing),
+                    'parent' => $listing['parent'], 'page' => $listing['page'], 'next' => $listing['next'],
+                    'previous' => $listing['previous'], 'location' => $listing['location'],
+                    'sources' => $listing['selection'] ?? null]
+            );
         } else if (in_array($action, ['inspect', 'review', 'approve'], true)) {
             $sources = required_param_array('sources', PARAM_RAW);
             $maxfiles = required_param('maxfiles', PARAM_INT);
@@ -92,7 +94,12 @@ if (optional_param('ajax', 0, PARAM_BOOL)) {
                 throw new moodle_exception('unavailable', 'repository_multipicker');
             }
             $options = compact('sources', 'maxfiles', 'basepath', 'preservefolders', 'excluded');
-            $snapshot = \repository_multipicker\local\preview::prepare($token, $scope, $options, $action === 'approve');
+            $snapshot = \repository_multipicker\local\preview::prepare(
+                $token,
+                $scope,
+                $options,
+                $action === 'approve' ? 'approve' : 'display'
+            );
             $removed = optional_param_array('removed', [], PARAM_RAW);
             if ($removed) {
                 $kept = optional_param_array('kept', [], PARAM_RAW);
@@ -122,17 +129,19 @@ if (optional_param('ajax', 0, PARAM_BOOL)) {
                 $SESSION->repository_multipicker[$token]['approvalnonce'] = bin2hex(random_bytes(16));
             }
             $source = 'batch:' . $token . ':' . ($SESSION->repository_multipicker[$token]['approvalnonce'] ?? '');
-            echo json_encode(['html' => $action === 'approve' ? '' : $renderer->render_from_template(
-                'repository_multipicker/browser/review',
-                \repository_multipicker\output\review::level($operations, $copymode === 'reference')
-            ),
-                'excluded' => $excluded,
-                'count' => count($operations),
-                'counts' => $counts,
-                'file' => $action === 'approve' ? ['title' => $operations[0]['filename'], 'source' => $source,
-                    'sourcekey' => sha1($source . repository::get_secret_key() . sesskey()),
-                    'repository_id' => $scope['repositoryid'],
-                    'thumbnail' => $renderer->image_url('f/document')->out(false)] : null]);
+            echo json_encode(
+                ['html' => $action === 'approve' ? '' : $renderer->render_from_template(
+                    'repository_multipicker/browser/review',
+                    \repository_multipicker\output\review::level($operations, $copymode === 'reference')
+                ),
+                    'excluded' => $excluded,
+                    'count' => count($operations),
+                    'counts' => $counts,
+                    'file' => $action === 'approve' ? ['title' => $operations[0]['filename'], 'source' => $source,
+                        'sourcekey' => sha1($source . repository::get_secret_key() . sesskey()),
+                        'repository_id' => $scope['repositoryid'],
+                        'thumbnail' => $renderer->image_url('f/document')->out(false)] : null]
+            );
         } else {
             throw new moodle_exception('unavailable', 'repository_multipicker');
         }
