@@ -23,3 +23,4 @@
 - Use the official checksum-verified Moodle Plugin CI 4.5.11 artifact and password-authenticated PostgreSQL initialization.
 - Refresh browser compatibility metadata with Node 22 and restore the core's own frontend build runtime.
 - Install the initial public schema without obsolete upgrade callbacks.
+- Preserve the CI archive suffix behind the command link and fail warning-only Mustache validation instead of accepting skipped child checks.

@@ -159,9 +159,11 @@ jobs:
       - name: Initialise moodle-plugin-ci
         run: |
           mkdir -p ci/bin
-          curl --fail --location --retry 3 https://github.com/moodlehq/moodle-plugin-ci/releases/download/4.5.11/moodle-plugin-ci.phar --output ci/bin/moodle-plugin-ci
-          echo "39b5d0d71f5ab88fac1c3f5fc1166b8673bc0a488b29cd8c56a8bca56a8f8bca  ci/bin/moodle-plugin-ci" | sha256sum --check --strict
-          chmod +x ci/bin/moodle-plugin-ci
+          curl --fail --location --retry 3 https://github.com/moodlehq/moodle-plugin-ci/releases/download/4.5.11/moodle-plugin-ci.phar --output ci/bin/moodle-plugin-ci.phar
+          echo "39b5d0d71f5ab88fac1c3f5fc1166b8673bc0a488b29cd8c56a8bca56a8f8bca  ci/bin/moodle-plugin-ci.phar" | sha256sum --check --strict
+          chmod +x ci/bin/moodle-plugin-ci.phar
+          # Child PHP processes need the .phar suffix to resolve archive URLs.
+          ln -s moodle-plugin-ci.phar ci/bin/moodle-plugin-ci
           echo "$(pwd)/ci/bin" >> "$GITHUB_PATH"
           sudo locale-gen en_AU.UTF-8
           echo "NVM_DIR=$HOME/.nvm" >> $GITHUB_ENV
@@ -218,7 +220,13 @@ jobs:
 
       - name: Mustache Lint
         if: ${{ !cancelled() }}
-        run: moodle-plugin-ci mustache
+        run: |
+          set -o pipefail
+          moodle-plugin-ci mustache 2>&1 | tee mustache.log
+          if grep -Eiq '(^|[[:space:]|])(warning|error|violation)([[:space:]|:]|$)|##\[(warning|error)\]' mustache.log; then
+            echo "::error::Mustache validation reported errors, warnings or violations."
+            exit 1
+          fi
 
       - name: Grunt
         if: ${{ !cancelled() }}
