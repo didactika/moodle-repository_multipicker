@@ -7,11 +7,9 @@ name: Release on version bump
 # The latest release is always the one of `main`, whichever branch published last: a release from a MOODLE_XXX_STABLE
 # branch is created with --latest=false, and every run ends by marking the release that `main` declares as the latest one.
 #
-# The version of every line ends with the code of its Moodle line, so lines never collide and a site that moves to a newer
-# line always sees a higher version:
-#   - MOODLE_XXX_STABLE -> $plugin->version = YYYYMMDDXX.XXX
-#   - main              -> $plugin->version = YYYYMMDDXX.<highest value of $plugin->supported>
-# A release whose version does not follow that is refused before anything is created.
+# The version of every line ends with the lowest Moodle version it supports, as a numeric string so trailing zeros are kept
+# ('2026101105.400' for $plugin->supported = [400, 502]), so lines never collide and a site that moves to a newer line always
+# sees a higher version. A release whose version does not follow that is refused before anything is created.
 #
 # It only acts when a tag for that release does not already exist, so re-running or unrelated edits to version.php are
 # safe (idempotent). It can also be started by hand from the Actions tab, for instance to mark the latest release again.
@@ -51,19 +49,21 @@ jobs:
           read_field() { grep -oP "\\\$plugin->$1\\s*=\\s*\\K[^;]+" version.php | head -n 1 | tr -d " '\"\r"; }
           release=$(read_field release)
           version=$(read_field version)
-          supported=$(grep -oP '\$plugin->supported\s*=\s*\[\K[^\]]+' version.php | tr ',' '\n' | tr -d ' \t\r' | grep -v '^$' | sort -n | tail -n 1)
+          line=$(grep -oP '\$plugin->supported\s*=\s*\[\K[^\]]+' version.php | tr ',' '\n' | tr -d ' \t\r' | grep -v '^$' | sort -n | head -n 1)
           if [ -z "$release" ] || [ -z "$version" ]; then
             echo "::error::Could not parse \$plugin->release and \$plugin->version from version.php"
             exit 1
           fi
           branch="${GITHUB_REF_NAME}"
-          if [ "$branch" = "main" ]; then
-            line="$supported"
-          else
-            line=$(echo "$branch" | grep -oP '^MOODLE_\K[0-9]+(?=_STABLE$)' || true)
-          fi
+          case "$branch" in
+            main|MOODLE_*_STABLE) ;;
+            *)
+              echo "::error::Release only from main or a MOODLE_XXX_STABLE branch, not from $branch."
+              exit 1
+              ;;
+          esac
           if [ -z "$line" ]; then
-            echo "::error::Release only from main or a MOODLE_XXX_STABLE branch, not from $branch."
+            echo "::error::Could not parse \$plugin->supported from version.php"
             exit 1
           fi
           if ! echo "$version" | grep -qE "^[0-9]{10}\\.${line}\$"; then
