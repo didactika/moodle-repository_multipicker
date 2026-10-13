@@ -1,34 +1,15 @@
 # Changelog
 
-## [4.0.1] - 2026-10-13
+## [Unreleased]
 
-- Write native draft source metadata for copied files and aliases so Moodle can save large Folder imports containing ordinary source text.
-- Cover the complete repository import and native Folder save in regression tests.
-- Replace legacy directional and badge classes on the shared maintenance line so newer Bootstrap themes do not flag them as deprecated.
+## [1.0.0-m400] - 2026-10-11
 
-## [4.0.0] - 2026-10-11
+First release of the Moodle 4.0 to 5.2 line, on `MOODLE_400_STABLE`. The Moodle 5.3 line is on `main` (1.0.0-m503).
 
-- Preserve the owner-selected `.400` minimum-Moodle suffix in plugin version metadata and release packages.
-- Initial public Server files MultiPicker distribution for Moodle 4.0–5.2.
-- Native Server files navigation and search with cards, list and lazy tree views.
-- Shared recursive selection, native limits, folder preservation and copy or alias imports.
-- Reusable browsing scopes with one-time approval identifiers and atomic draft copies.
-- Fixed translated repository name and the provided plugin icon.
-- Scope the enlarged chooser and hidden native toolbar to the active MultiPicker tab, restoring native presentation on repository changes.
-- Preserve direct checkbox/card intent during asynchronous validation and synchronize directory/child selection across all views.
-- Retain source-relative paths for individual files and count overlapping selections once in directory badges.
-- Match FileBank card footers, compact list navigation, native Back controls and leading tree expanders.
-- Restore native presentation through a parent-loaded lifecycle adapter that survives Chrome document replacement.
-- Reuse native listing keys for Select all and a short-lived display snapshot for inspection/review; revalidate the complete selection before approval and copying.
-- Render collapsed review branches on demand, page direct children and support individual file/folder removal with unloaded descendant exceptions.
-- Bound long destination paths before native storage writes with stable abbreviated folder names, preserving file content and source metadata.
-- Show the full native source route, enforce two-line titles in every layout and remove native icon margins from compact delete controls.
-- Correct strict AMD formatting and split toolbar/row click dispatch while preserving whole-card and recursive selection.
-- Separate validation, native listing and copy preparation into focused services without removing regression coverage.
-- Enforce clean PHP Mess Detector reports and zero coding/documentation warnings in both maintenance lines.
-- Use the official checksum-verified Moodle Plugin CI 4.5.11 artifact and password-authenticated PostgreSQL initialization.
-- Refresh browser compatibility metadata with Node 22 and restore the core's own frontend build runtime.
-- Install the initial public schema without obsolete upgrade callbacks.
-- Preserve the CI archive suffix behind the command link and fail warning-only Mustache validation instead of accepting skipped child checks.
-- Follow native theme colours and Bootstrap components; synchronize owning colour modes and runtime tokens across embedded picker documents.
-- Use mapped Moodle folder/file icons for native dark-mode contrast and match the painted modal surface instead of the page body background.
+### Added
+
+- Multiple selection in the Server files repository of Moodle: files and recursive folders can be selected together, including results from other pages, with cards, list and expandable tree views that load only the branch that is open.
+- Search that keeps the selection and can be cleared on its own; keeping the source folders or placing the files in the current destination; copying files or creating aliases when the owning control supports references.
+- A review of the resulting paths before importing: identical files are skipped and conflicting paths are reported; the source author and licence are kept and the file types, file count and storage limits of the owning form are respected.
+- Colours and components that follow the active theme and its colour modes.
+- The interface is written in AMD modules and Mustache templates, with the same features as the 5.3 line.

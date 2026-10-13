@@ -6,7 +6,7 @@
 
 *Select several Server files and folders in one import*
 
-[![Release](https://img.shields.io/github/v/release/didactika/moodle-repository_multipicker?filter=v4.0.*&style=flat-square)](https://github.com/didactika/moodle-repository_multipicker/releases)
+[![Release](https://img.shields.io/github/v/release/didactika/moodle-repository_multipicker?filter=v*-m400&style=flat-square)](https://github.com/didactika/moodle-repository_multipicker/releases)
 [![Moodle](https://img.shields.io/badge/Moodle-4.0%E2%80%935.2-f98012?style=flat-square&logo=moodle&logoColor=white)](https://moodle.org)
 [![PHP](https://img.shields.io/badge/PHP-7.4+-777bb4?style=flat-square&logo=php&logoColor=white)](https://www.php.net)
 [![License](https://img.shields.io/badge/License-GPL_v3-blue?style=flat-square)](LICENSE)
@@ -30,7 +30,7 @@ The repository uses the same accessible files, directories and search as Server 
 
 ## Installation
 
-**Requirements:** Moodle 4.0–5.2, PHP 7.4 or newer, and the database requirements of the selected Moodle release. This distribution’s release is **4.0.1**.
+**Requirements:** Moodle 4.0–5.2, PHP 7.4 or newer, and the database requirements of the selected Moodle release.
 
 **From a release:** download the matching release ZIP, open **Site administration → Plugins → Install plugins**, upload the package and follow the prompts.
 
