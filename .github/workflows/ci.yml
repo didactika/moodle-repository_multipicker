@@ -18,6 +18,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   setup:
     # Turns $plugin->supported (version.php) into the test matrix consumed by
@@ -54,7 +57,9 @@ jobs:
             "502": ["8.3"],
             "503": ["8.3", "8.4"]
           }'
-          # Expand supported lower/upper bounds across existing release codes, including the 4.x/5.x gap.
+          # The matrix holds the two ends of the supported range and every LTS release between them (MOODLE_LTS): for
+          # [400, 502] that is 400, 401, 405 and 502. Add the code of a new LTS release to MOODLE_LTS when Moodle announces it.
+          MOODLE_LTS='["401", "405"]'
           supported_raw=$(grep -oP '\$plugin->supported\s*=\s*\[\K[^\]]+' version.php || true)
           if [ -z "$supported_raw" ]; then
             echo "::error::Could not find \$plugin->supported = [...] in version.php."
@@ -76,7 +81,7 @@ jobs:
 
           lower=$(echo "$supported_raw" | cut -d, -f1)
           upper=$(echo "$supported_raw" | awk -F, '{print $NF}')
-          expanded=$(echo "$MOODLE_PHP_TABLE" | jq -r --argjson lower "$lower" --argjson upper "$upper" 'keys[] | select((tonumber >= $lower) and (tonumber <= $upper))')
+          expanded=$(jq -rn --argjson lo "$lower" --argjson hi "$upper" --argjson lts "$MOODLE_LTS" '([($lo | tostring), ($hi | tostring)] + ($lts | map(select((tonumber) > $lo and (tonumber) < $hi)))) | unique | sort_by(tonumber) | .[]')
           mapfile -t versions <<< "$expanded"
           for raw in "${versions[@]}"; do
             v=$(echo "$raw" | tr -d '[:space:]')
