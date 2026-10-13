@@ -24,8 +24,8 @@
  */
 defined('MOODLE_INTERNAL') || die();
 $plugin->component = 'repository_multipicker';
-$plugin->version = '2026101115.503';
+$plugin->version = 2026101400;
 $plugin->requires = 2026100500;
 $plugin->maturity = MATURITY_STABLE;
-$plugin->release = '5.3.1';
+$plugin->release = '1.0.0-m503';
 $plugin->supported = [503, 503];
