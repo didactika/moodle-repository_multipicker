@@ -4,6 +4,7 @@
 
 - Write native draft source metadata for copied files and aliases so Moodle can save large Folder imports containing ordinary source text.
 - Cover the complete repository import and native Folder save in regression tests.
+- Replace legacy directional and badge classes on the shared maintenance line so newer Bootstrap themes do not flag them as deprecated.
 
 ## [4.0.0] - 2026-10-11
 

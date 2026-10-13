@@ -116,6 +116,23 @@ body.multipicker-embedded,
     font-size: 0.72rem;
     font-weight: 600;
 }
+.multipicker-browser .multipicker-indent {
+    margin-inline-start: 1rem;
+    padding-inline-start: 0.5rem;
+    border-inline-start: 1px solid var(--bs-border-color, var(--border-color, currentColor));
+}
+.multipicker-browser .multipicker-inline-end-gap {
+    margin-inline-end: 0.4rem;
+}
+.multipicker-browser .multipicker-inline-start-gap {
+    margin-inline-start: 0.25rem;
+}
+.multipicker-browser .multipicker-inline-start-gap-lg {
+    margin-inline-start: 0.5rem;
+}
+.multipicker-browser .multipicker-push-end {
+    margin-inline-start: auto;
+}
 .multipicker-browser [data-multipicker-card].border-primary,
 .multipicker-browser [data-multipicker-card]:hover {
     background: var(--bs-primary-bg-subtle);
