@@ -204,7 +204,8 @@ class browser {
         $destination = ['contextid' => $contextid, 'component' => 'user',
             'filearea' => 'draft', 'itemid' => $scope['draftid'], 'filepath' => $operation['filepath'],
             'filename' => $operation['filename'], 'userid' => $USER->id,
-            'author' => $file->get_author(), 'license' => $file->get_license()];
+            'author' => $file->get_author(), 'license' => $file->get_license(),
+            'source' => \repository::build_source_field($file->get_source())];
         if (($scope['copymode'] ?? 'copy') === 'reference') {
             $destination['contenthash'] = $file->get_contenthash();
             $destination['filesize'] = $file->get_filesize();

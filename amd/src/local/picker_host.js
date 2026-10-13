@@ -8,6 +8,8 @@
  * @author Hector Arrechea <hectorlazaroarrechea@gmail.com>
  * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+import {observe} from 'repository_multipicker/local/theme';
+
 const releases = new WeakMap();
 
 /**
@@ -32,7 +34,9 @@ export const mount = object => {
     };
     reveal();
     window.addEventListener('resize', reveal);
+    const stopTheme = observe(object, surface);
     const release = () => {
+        stopTheme();
         observer.disconnect();
         window.removeEventListener('resize', reveal);
         picker.classList.remove('multipicker-native-host');
