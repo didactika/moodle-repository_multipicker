@@ -1,0 +1,8 @@
+{
+  "version": 3,
+  "sources": ["../src/types.ts"],
+  "sourceRoot": "../../../../../../sources/public/repository/multipicker/js/esm/build",
+  "sourcesContent": ["/**\n * Typed native picker and browser response contracts.\n * @copyright 2026 Didactika.org\n * @author Hector Arrechea <hectorlazaroarrechea@gmail.com>\n * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later\n */\nexport interface NativeFile {title: string; source: string; sourcekey: string; repository_id: number; thumbnail: string}\nexport type NativeWindow = Window & {require(modules: string[], loaded: (adapter: {mount(object: Element): void}) => void): void; M: {core_filepicker: {\n    active_filepicker: {options: {env: string; itemid?: number; maxfiles?: number; savepath?: string; return_types?: number}};\n    select_file(file: NativeFile): void;\n}}};\nexport interface Response {html?: string; error?: string; parent?: string; previous?: boolean; next?: boolean;\n    location?: string; file?: NativeFile; count?: number; counts?: Record<string, number>; sources?: string[]; excluded?: string[]}\n"],
+  "mappings": "AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;",
+  "names": []
+}

@@ -1,9 +1,15 @@
 # Changelog
 
+## [5.3.1] - 2026-10-13
+
+- Write native draft source metadata for copied files and aliases so Moodle can save large Folder imports containing ordinary source text.
+- Cover the complete repository import and native Folder save in regression tests.
+- Organize the 5.3 TypeScript picker into view components, state engine, services, selectors and shared types.
+
 ## [5.3.0] - 2026-10-11
 
+- Preserve the owner-selected `.503` minimum-Moodle suffix in plugin version metadata and release packages.
 - Scope the enlarged chooser and hidden native toolbar to the active MultiPicker tab, restoring native presentation on repository changes.
-
 - Initial public Server files MultiPicker distribution for Moodle 5.3.
 - Native Server files navigation and search with cards, list and lazy tree views.
 - Shared recursive selection, native limits, folder preservation and copy or alias imports.
@@ -24,3 +30,6 @@
 - Refresh browser compatibility metadata with Node 22 and restore the core's own frontend build runtime.
 - Install the initial public schema without obsolete upgrade callbacks.
 - Preserve the CI archive suffix behind the command link and fail warning-only Mustache validation instead of accepting skipped child checks.
+- Follow native theme colours and Bootstrap components; synchronize owning colour modes and runtime tokens across embedded picker documents.
+- Use mapped Moodle folder/file icons for native dark-mode contrast and match the painted modal surface instead of the page body background.
+- Replace obsolete Bootstrap utilities and enforce native SCSS deprecation checks in the Moodle 5.3 CI line.

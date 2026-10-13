@@ -40,15 +40,15 @@ jobs:
           supported, prefix = expected[branch]
           release = ast.literal_eval(value('release'))
           component = ast.literal_eval(value('component'))
-          version = value('version')
+          version = ast.literal_eval(value('version'))
           if ast.literal_eval(value('supported')) != supported:
               raise SystemExit('Supported versions do not match the maintenance branch.')
           if not release.startswith(prefix) or not re.fullmatch(r'\d+\.\d+\.\d+', release):
               raise SystemExit('Release must follow the maintenance line and semantic version format.')
           if value('maturity') != 'MATURITY_STABLE':
               raise SystemExit('Stable release metadata is required.')
-          if not re.fullmatch(r'\d{10}', version):
-              raise SystemExit('Version must use YYYYMMDDXX.')
+          if not re.fullmatch(r'\d{10}\.503', version):
+              raise SystemExit('Version must use YYYYMMDDXX.503 on this maintenance line.')
           datetime.datetime.strptime(version[:8], '%Y%m%d')
           if not re.fullmatch(r'(local|repository)_[a-z][a-z0-9]*', component):
               raise SystemExit('Invalid plugin component.')

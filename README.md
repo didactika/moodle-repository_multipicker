@@ -30,7 +30,7 @@ The repository uses the same accessible files, directories and search as Server 
 
 ## Installation
 
-**Requirements:** Moodle 5.3, PHP 8.3 or newer, and the database requirements of the selected Moodle release. This distribution’s release is **5.3.0**.
+**Requirements:** Moodle 5.3, PHP 8.3 or newer, and the database requirements of the selected Moodle release. This distribution’s release is **5.3.1**.
 
 **From a release:** download the matching release ZIP, open **Site administration → Plugins → Install plugins**, upload the package and follow the prompts.
 
@@ -77,6 +77,15 @@ The chooser respects native destination limits and bounds traversal to 500 selec
 | A selection exceeds a limit | Remove files or folders, or change the owning form’s allowed limits |
 | A destination path conflicts | Clear that source from the selection or choose another destination directory |
 | A session expired | Reopen the repository and review the current files before importing |
+| A draft imported with an older version fails when saving the Folder form | Remove that failed draft selection and import it again after updating the plugin; new imports use Moodle's native draft source format |
+
+## Theme colours
+
+Material folder/file icons inherit native text colours. Embedded backgrounds match the actual owning picker surface, including live theme changes.
+
+Controls and badges use the active theme's Bootstrap components. Surfaces, selection and focus use native Bootstrap tokens without a plugin palette or fixed light-colour fallback. Embedded pickers inherit the owning page's mode and runtime Bootstrap overrides, including changes while the picker remains open.
+
+Moodle 5.3 Boost colour modes are experimental and must be enabled in the theme settings. FileBank follows Light, Dark and System; it does not enable the feature or store its own mode.
 
 ## Getting help
 
