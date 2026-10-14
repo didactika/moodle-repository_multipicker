@@ -29,4 +29,3 @@ $plugin->requires = 2022041900;
 $plugin->maturity = MATURITY_STABLE;
 $plugin->release = '1.0.0-m400';
 $plugin->supported = [400, 502];
-$plugin->incompatible = 503; // Moodle 5.3 has its own line, on main and MOODLE_503_STABLE.
